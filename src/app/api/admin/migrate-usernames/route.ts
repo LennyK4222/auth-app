@@ -25,7 +25,7 @@ export async function POST() {
       
       // If still no username, use "User" + user ID
       if (!username) {
-        username = `User${(user._id as any).toString().slice(-6)}`;
+        username = `User${String(user._id).slice(-6)}`;
       }
 
       // Ensure username is unique by adding numbers if needed

@@ -6,6 +6,12 @@ import { User } from '@/models/User';
 import { Post } from '@/models/Post';
 import { Comment } from '@/models/Comment';
 
+// Tipuri pentru agregări MongoDB
+interface UserGrowthItem {
+  _id: string;
+  count: number;
+}
+
 export async function GET() {
   try {
     await connectToDatabase();
@@ -59,13 +65,8 @@ export async function GET() {
       createdAt: { $gte: monthAgo }
     });
 
-    // Total postări și comentarii  
+    // Total postări
     const totalPosts = await Post.countDocuments();
-    
-    // Count doar comentariile care au autori valizi
-    const totalComments = await Comment.countDocuments({
-      authorId: { $exists: true }
-    });
     
     // Verifică comentariile cu autori valizi
     const validCommentsData = await Comment.aggregate([
@@ -199,8 +200,8 @@ export async function GET() {
       const date = new Date(today.getTime() - i * 24 * 60 * 60 * 1000);
       const dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD format
       
-      const newUsersForDay = userGrowthData[0].newUsers.find((item: any) => item._id === dateString)?.count || 0;
-      const activeUsersForDay = userGrowthData[0].activeUsers.find((item: any) => item._id === dateString)?.count || 0;
+      const newUsersForDay = userGrowthData[0].newUsers.find((item: UserGrowthItem) => item._id === dateString)?.count || 0;
+      const activeUsersForDay = userGrowthData[0].activeUsers.find((item: UserGrowthItem) => item._id === dateString)?.count || 0;
 
       userGrowth.push({
         date: date.toISOString(),
