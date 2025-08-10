@@ -281,30 +281,117 @@ export default function UserAnalytics() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="bg-white rounded-lg shadow border border-gray-200"
+        className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border border-gray-200"
       >
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">User Growth (Last 7 Days)</h3>
+        <div className="px-6 py-4 border-b border-gray-200 bg-white rounded-t-xl">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+              <svg className="w-5 h-5 mr-2 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+              </svg>
+              User Growth (Last 7 Days)
+            </h3>
+            <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-md">
+              Real-time data
+            </div>
+          </div>
         </div>
         <div className="p-6">
-          <div className="space-y-4">
-            {stats.userGrowth.map((day, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700">
-                  {day.dateLabel}
-                </span>
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center">
-                    <span className="text-sm text-gray-500 mr-2">New:</span>
-                    <span className="text-sm font-medium text-purple-600">{day.newUsers}</span>
+          <div className="space-y-5">
+            {stats.userGrowth.map((day, index) => {
+              const maxUsers = Math.max(...stats.userGrowth.map(d => Math.max(d.newUsers, d.activeUsers)));
+              const newUsersWidth = maxUsers > 0 ? (day.newUsers / maxUsers) * 100 : 0;
+              const activeUsersWidth = maxUsers > 0 ? (day.activeUsers / maxUsers) * 100 : 0;
+              
+              return (
+                <motion.div 
+                  key={index} 
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-white rounded-lg p-4 border border-gray-100 hover:shadow-md transition-all duration-200"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-semibold text-gray-800 flex items-center">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
+                      {day.dateLabel}
+                    </span>
+                    <div className="flex items-center space-x-3">
+                      <div className="text-right">
+                        <div className="text-xs text-gray-500">New Users</div>
+                        <div className="text-sm font-bold text-purple-600">{day.newUsers}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs text-gray-500">Active Users</div>
+                        <div className="text-sm font-bold text-green-600">{day.activeUsers}</div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center">
-                    <span className="text-sm text-gray-500 mr-2">Active:</span>
-                    <span className="text-sm font-medium text-green-600">{day.activeUsers}</span>
+                  
+                  {/* Progress Bars */}
+                  <div className="space-y-2">
+                    <div>
+                      <div className="flex justify-between text-xs text-gray-600 mb-1">
+                        <span>New Users</span>
+                        <span>{day.newUsers}</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${newUsersWidth}%` }}
+                          transition={{ delay: (index * 0.1) + 0.3, duration: 0.8 }}
+                          className="bg-gradient-to-r from-purple-500 to-purple-600 h-2 rounded-full shadow-sm"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <div className="flex justify-between text-xs text-gray-600 mb-1">
+                        <span>Active Users</span>
+                        <span>{day.activeUsers}</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${activeUsersWidth}%` }}
+                          transition={{ delay: (index * 0.1) + 0.5, duration: 0.8 }}
+                          className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full shadow-sm"
+                        />
+                      </div>
+                    </div>
                   </div>
+                </motion.div>
+              );
+            })}
+          </div>
+          
+          {/* Summary Section */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-purple-50 rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold text-purple-600">
+                  {stats.userGrowth.reduce((sum, day) => sum + day.newUsers, 0)}
                 </div>
+                <div className="text-sm text-purple-700 font-medium">Total New Users</div>
+                <div className="text-xs text-purple-600 mt-1">Last 7 days</div>
               </div>
-            ))}
+              
+              <div className="bg-green-50 rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold text-green-600">
+                  {Math.max(...stats.userGrowth.map(day => day.activeUsers))}
+                </div>
+                <div className="text-sm text-green-700 font-medium">Peak Active Users</div>
+                <div className="text-xs text-green-600 mt-1">Daily maximum</div>
+              </div>
+              
+              <div className="bg-blue-50 rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold text-blue-600">
+                  {Math.round(stats.userGrowth.reduce((sum, day) => sum + day.activeUsers, 0) / stats.userGrowth.length)}
+                </div>
+                <div className="text-sm text-blue-700 font-medium">Avg Active Users</div>
+                <div className="text-xs text-blue-600 mt-1">Daily average</div>
+              </div>
+            </div>
           </div>
         </div>
       </motion.div>
