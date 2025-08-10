@@ -59,20 +59,44 @@ export async function GET() {
       createdAt: { $gte: monthAgo }
     });
 
-    // Total postări și comentarii
+    // Total postări și comentarii  
     const totalPosts = await Post.countDocuments();
-    const totalComments = await Comment.countDocuments();
+    
+    // Count doar comentariile care au autori valizi
+    const totalComments = await Comment.countDocuments({
+      authorId: { $exists: true }
+    });
+    
+    // Verifică comentariile cu autori valizi
+    const validCommentsData = await Comment.aggregate([
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'authorId',
+          foreignField: '_id',
+          as: 'author'
+        }
+      },
+      {
+        $match: { author: { $size: 1 } } // Doar comentariile cu autor valid
+      },
+      {
+        $count: "total"
+      }
+    ]);
+    
+    const validCommentsCount = validCommentsData[0]?.total || 0;
 
     // Media postărilor per utilizator
     const averagePostsPerUser = totalUsers > 0 ? totalPosts / totalUsers : 0;
 
-    // Top utilizatori cu postări
+    // Top utilizatori cu postări (folosind doar comentarii cu autori valizi)
     const topUsersData = await User.aggregate([
       {
         $lookup: {
           from: 'posts',
           localField: '_id',
-          foreignField: 'author',
+          foreignField: 'authorId',
           as: 'userPosts'
         }
       },
@@ -80,7 +104,7 @@ export async function GET() {
         $lookup: {
           from: 'comments',
           localField: '_id',
-          foreignField: 'author',
+          foreignField: 'authorId',
           as: 'userComments'
         }
       },
@@ -156,7 +180,7 @@ export async function GET() {
       newUsersWeek,
       newUsersMonth,
       totalPosts,
-      totalComments,
+      totalComments: validCommentsCount, // Folosește doar comentariile valide
       averagePostsPerUser: Number(averagePostsPerUser.toFixed(1)),
       topUsers,
       userGrowth
