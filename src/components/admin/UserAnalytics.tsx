@@ -26,6 +26,7 @@ interface UserStats {
   }[];
   userGrowth: {
     date: string;
+    dateLabel: string;
     newUsers: number;
     activeUsers: number;
   }[];
@@ -289,8 +290,8 @@ export default function UserAnalytics() {
           <div className="space-y-4">
             {stats.userGrowth.map((day, index) => (
               <div key={index} className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">
-                  {new Date(day.date).toLocaleDateString()}
+                <span className="text-sm font-medium text-gray-700">
+                  {day.dateLabel}
                 </span>
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center">
