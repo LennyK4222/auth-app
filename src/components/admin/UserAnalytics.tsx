@@ -121,17 +121,22 @@ export default function UserAnalytics() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg shadow p-6 border border-gray-200"
+          className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Users</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
+              <p className="text-sm font-medium text-blue-100">Total Users</p>
+              <p className="text-3xl font-bold text-white">{stats.totalUsers}</p>
             </div>
-            <div className="p-3 bg-blue-100 rounded-full">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
               </svg>
+            </div>
+          </div>
+          <div className="mt-4 flex items-center">
+            <div className="w-full bg-white/20 rounded-full h-2">
+              <div className="bg-white h-2 rounded-full" style={{ width: '85%' }}></div>
             </div>
           </div>
         </motion.div>
@@ -140,17 +145,22 @@ export default function UserAnalytics() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-lg shadow p-6 border border-gray-200"
+          className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Active Today</p>
-              <p className="text-2xl font-bold text-green-600">{stats.activeUsersToday}</p>
+              <p className="text-sm font-medium text-green-100">Active Today</p>
+              <p className="text-3xl font-bold text-white">{stats.activeUsersToday}</p>
             </div>
-            <div className="p-3 bg-green-100 rounded-full">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
+            </div>
+          </div>
+          <div className="mt-4 flex items-center">
+            <div className="w-full bg-white/20 rounded-full h-2">
+              <div className="bg-white h-2 rounded-full" style={{ width: '70%' }}></div>
             </div>
           </div>
         </motion.div>
@@ -159,17 +169,22 @@ export default function UserAnalytics() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-lg shadow p-6 border border-gray-200"
+          className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">New This Week</p>
-              <p className="text-2xl font-bold text-purple-600">{stats.newUsersWeek}</p>
+              <p className="text-sm font-medium text-purple-100">New This Week</p>
+              <p className="text-3xl font-bold text-white">{stats.newUsersWeek}</p>
             </div>
-            <div className="p-3 bg-purple-100 rounded-full">
-              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
               </svg>
+            </div>
+          </div>
+          <div className="mt-4 flex items-center">
+            <div className="w-full bg-white/20 rounded-full h-2">
+              <div className="bg-white h-2 rounded-full" style={{ width: '60%' }}></div>
             </div>
           </div>
         </motion.div>
@@ -178,17 +193,22 @@ export default function UserAnalytics() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white rounded-lg shadow p-6 border border-gray-200"
+          className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg p-6 text-white"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Avg Posts/User</p>
-              <p className="text-2xl font-bold text-orange-600">{stats.averagePostsPerUser.toFixed(1)}</p>
+              <p className="text-sm font-medium text-orange-100">Avg Posts/User</p>
+              <p className="text-3xl font-bold text-white">{stats.averagePostsPerUser.toFixed(1)}</p>
             </div>
-            <div className="p-3 bg-orange-100 rounded-full">
-              <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
+            </div>
+          </div>
+          <div className="mt-4 flex items-center">
+            <div className="w-full bg-white/20 rounded-full h-2">
+              <div className="bg-white h-2 rounded-full" style={{ width: '45%' }}></div>
             </div>
           </div>
         </motion.div>
