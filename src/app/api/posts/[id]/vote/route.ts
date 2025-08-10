@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { verifyAuthToken } from '@/lib/auth/jwt';
+import { verifyAuthToken, type JWTPayload } from '@/lib/auth/jwt';
 import { connectToDatabase } from '@/lib/db';
 import { Post } from '@/models/Post';
 import { z } from 'zod';
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const cookieStore = await cookies();
   const token = cookieStore.get('token')?.value;
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  let user: any;
+  let user: JWTPayload;
   try { user = await verifyAuthToken(token); } catch { return NextResponse.json({ error: 'Unauthorized' }, { status: 401 }); }
   const json = await req.json();
   const { dir } = VoteSchema.parse(json);
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const { id } = await params;
   const post = await Post.findById(id);
   if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  const votes = (post as any).votes || {};
+  const votes = (post as { votes?: Record<string, number> }).votes || {};
   const prev = votes[user.sub] as (1|-1|undefined);
   if (dir === 'clear') {
     if (prev) {

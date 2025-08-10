@@ -10,7 +10,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const enc = new TextEncoder();
   let stopped = false;
 
-  const send = async (data: any) => {
+  const send = async (data: unknown) => {
     if (stopped) return;
     try {
       await writer.write(enc.encode(`data: ${JSON.stringify(data)}\n\n`));
