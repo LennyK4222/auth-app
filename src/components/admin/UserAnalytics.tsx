@@ -121,22 +121,22 @@ export default function UserAnalytics() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white"
+          className="rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 p-6 backdrop-blur-sm"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-blue-100">Total Users</p>
-              <p className="text-3xl font-bold text-white">{stats.totalUsers}</p>
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Total Users</p>
+              <p className="text-3xl font-bold text-slate-900 dark:text-white">{stats.totalUsers}</p>
             </div>
-            <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+              <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
               </svg>
             </div>
           </div>
           <div className="mt-4 flex items-center">
-            <div className="w-full bg-white/20 rounded-full h-2">
-              <div className="bg-white h-2 rounded-full" style={{ width: '85%' }}></div>
+            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+              <div className="bg-blue-500 h-2 rounded-full" style={{ width: '85%' }}></div>
             </div>
           </div>
         </motion.div>
@@ -145,22 +145,22 @@ export default function UserAnalytics() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white"
+          className="rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 p-6 backdrop-blur-sm"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-green-100">Active Today</p>
-              <p className="text-3xl font-bold text-white">{stats.activeUsersToday}</p>
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Active Today</p>
+              <p className="text-3xl font-bold text-green-600 dark:text-green-400">{stats.activeUsersToday}</p>
             </div>
-            <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
+              <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
           </div>
           <div className="mt-4 flex items-center">
-            <div className="w-full bg-white/20 rounded-full h-2">
-              <div className="bg-white h-2 rounded-full" style={{ width: '70%' }}></div>
+            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+              <div className="bg-green-500 h-2 rounded-full" style={{ width: '70%' }}></div>
             </div>
           </div>
         </motion.div>
@@ -169,22 +169,22 @@ export default function UserAnalytics() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white"
+          className="rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 p-6 backdrop-blur-sm"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-purple-100">New This Week</p>
-              <p className="text-3xl font-bold text-white">{stats.newUsersWeek}</p>
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">New This Week</p>
+              <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{stats.newUsersWeek}</p>
             </div>
-            <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-full">
+              <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
               </svg>
             </div>
           </div>
           <div className="mt-4 flex items-center">
-            <div className="w-full bg-white/20 rounded-full h-2">
-              <div className="bg-white h-2 rounded-full" style={{ width: '60%' }}></div>
+            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+              <div className="bg-purple-500 h-2 rounded-full" style={{ width: '60%' }}></div>
             </div>
           </div>
         </motion.div>
@@ -193,22 +193,22 @@ export default function UserAnalytics() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg p-6 text-white"
+          className="rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 p-6 backdrop-blur-sm"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-orange-100">Avg Posts/User</p>
-              <p className="text-3xl font-bold text-white">{stats.averagePostsPerUser.toFixed(1)}</p>
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Avg Posts/User</p>
+              <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">{stats.averagePostsPerUser.toFixed(1)}</p>
             </div>
-            <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-full">
+              <svg className="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             </div>
           </div>
           <div className="mt-4 flex items-center">
-            <div className="w-full bg-white/20 rounded-full h-2">
-              <div className="bg-white h-2 rounded-full" style={{ width: '45%' }}></div>
+            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+              <div className="bg-orange-500 h-2 rounded-full" style={{ width: '45%' }}></div>
             </div>
           </div>
         </motion.div>
@@ -219,35 +219,40 @@ export default function UserAnalytics() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="bg-white rounded-lg shadow border border-gray-200"
+        className="rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 backdrop-blur-sm"
       >
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Top Active Users</h3>
+        <div className="px-6 py-4 border-b border-slate-200/60 dark:border-slate-800/60">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center">
+            <svg className="w-5 h-5 mr-2 text-indigo-600 dark:text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Top Active Users
+          </h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+            <thead className="bg-slate-50 dark:bg-slate-800/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   User
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Posts
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Comments
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Join Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Last Active
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {stats.topUsers.map((user) => (
-                <tr key={user._id} className="hover:bg-gray-50">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+              {stats.topUsers.map((user, index) => (
+                <tr key={user._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors duration-200">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
@@ -260,33 +265,33 @@ export default function UserAnalytics() {
                             height={40}
                           />
                         ) : (
-                          <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                            <span className="text-sm font-medium text-gray-700">
+                          <div className="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+                            <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
                               {user.username.charAt(0).toUpperCase()}
                             </span>
                           </div>
                         )}
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{user.username}</div>
-                        <div className="text-sm text-gray-500">{user.email}</div>
+                        <div className="text-sm font-medium text-slate-900 dark:text-white">{user.username}</div>
+                        <div className="text-sm text-slate-500 dark:text-slate-400">{user.email}</div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
                       {user.postsCount}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
                       {user.commentsCount}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
                     {new Date(user.joinDate).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
                     {user.lastActive ? new Date(user.lastActive).toLocaleDateString() : 'Never'}
                   </td>
                 </tr>
@@ -301,17 +306,17 @@ export default function UserAnalytics() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border border-gray-200"
+        className="rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 backdrop-blur-sm"
       >
-        <div className="px-6 py-4 border-b border-gray-200 bg-white rounded-t-xl">
+        <div className="px-6 py-4 border-b border-slate-200/60 dark:border-slate-800/60">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-              <svg className="w-5 h-5 mr-2 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center">
+              <svg className="w-5 h-5 mr-2 text-teal-600 dark:text-teal-400" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
               </svg>
               User Growth (Last 7 Days)
             </h3>
-            <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-md">
+            <div className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">
               Real-time data
             </div>
           </div>
@@ -329,21 +334,21 @@ export default function UserAnalytics() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="bg-white rounded-lg p-4 border border-gray-100 hover:shadow-md transition-all duration-200"
+                  className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold text-gray-800 flex items-center">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
+                    <span className="text-sm font-semibold text-slate-900 dark:text-white flex items-center">
+                      <div className="w-2 h-2 bg-teal-500 rounded-full mr-2"></div>
                       {day.dateLabel}
                     </span>
                     <div className="flex items-center space-x-3">
                       <div className="text-right">
-                        <div className="text-xs text-gray-500">New Users</div>
-                        <div className="text-sm font-bold text-purple-600">{day.newUsers}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">New Users</div>
+                        <div className="text-sm font-bold text-purple-600 dark:text-purple-400">{day.newUsers}</div>
                       </div>
                       <div className="text-right">
-                        <div className="text-xs text-gray-500">Active Users</div>
-                        <div className="text-sm font-bold text-green-600">{day.activeUsers}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">Active Users</div>
+                        <div className="text-sm font-bold text-green-600 dark:text-green-400">{day.activeUsers}</div>
                       </div>
                     </div>
                   </div>
@@ -351,11 +356,11 @@ export default function UserAnalytics() {
                   {/* Progress Bars */}
                   <div className="space-y-2">
                     <div>
-                      <div className="flex justify-between text-xs text-gray-600 mb-1">
+                      <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400 mb-1">
                         <span>New Users</span>
                         <span>{day.newUsers}</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
                         <motion.div 
                           initial={{ width: 0 }}
                           animate={{ width: `${newUsersWidth}%` }}
@@ -366,11 +371,11 @@ export default function UserAnalytics() {
                     </div>
                     
                     <div>
-                      <div className="flex justify-between text-xs text-gray-600 mb-1">
+                      <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400 mb-1">
                         <span>Active Users</span>
                         <span>{day.activeUsers}</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
                         <motion.div 
                           initial={{ width: 0 }}
                           animate={{ width: `${activeUsersWidth}%` }}
