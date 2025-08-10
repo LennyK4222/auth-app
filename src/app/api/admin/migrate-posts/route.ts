@@ -3,7 +3,7 @@ import { connectToDatabase } from '@/lib/db';
 import { Post } from '@/models/Post';
 import { Category } from '@/models/Category';
 
-export async function POST(req: NextRequest) {
+export async function POST() {
   try {
     await connectToDatabase();
 
