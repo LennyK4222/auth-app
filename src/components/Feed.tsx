@@ -294,7 +294,7 @@ function Composer({ onPosted }: { onPosted: () => void }) {
       } else {
         throw new Error('Eroare la publicare');
       }
-    } catch (error) {
+    } catch {
       toast({
         title: "Eroare",
         description: "Nu am putut publica postarea",
@@ -357,114 +357,5 @@ function Composer({ onPosted }: { onPosted: () => void }) {
         </div>
       </div>
     </motion.div>
-  );
-}
-
-// Modern compact Like component for cards
-function Like({ postId, initialLikes, initialLiked }: { postId: string; initialLikes: number; initialLiked: boolean }) {
-  const [likes, setLikes] = useState(initialLikes || 0);
-  const [liked, setLiked] = useState(!!initialLiked);
-  const [burst, setBurst] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const { csrfToken } = useCsrfToken();
-
-  const toggle = async () => {
-    if (isAnimating || !csrfToken) return;
-    setIsAnimating(true);
-    
-    // optimistic UI using computed next state
-    const nextLiked = !liked;
-    setLiked(nextLiked);
-    setLikes(prev => (nextLiked ? prev + 1 : Math.max(0, prev - 1)));
-    if (nextLiked) setBurst(b => b + 1);
-    
-    try {
-      const res = await fetch(`/api/posts/${postId}/like`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-        credentials: 'include',
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setLiked(!!data.liked);
-        setLikes(Number(data.likes) || 0);
-      }
-    } catch (error) {
-      // Revert on error
-      setLiked(!nextLiked);
-      setLikes(prev => (nextLiked ? Math.max(0, prev - 1) : prev + 1));
-    } finally {
-      setTimeout(() => setIsAnimating(false), 300);
-    }
-  };
-
-  return (
-    <div className="flex flex-col items-center gap-1 min-w-[60px]">
-      <motion.button 
-        onClick={toggle}
-        disabled={isAnimating}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className={`relative flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 ${
-          liked 
-            ? 'bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400' 
-            : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
-        }`}
-        aria-label="Like"
-      >
-        <motion.span 
-          className="text-lg"
-          animate={{ 
-            scale: liked ? [1, 1.3, 1] : 1,
-            rotate: liked ? [0, -10, 10, 0] : 0 
-          }}
-          transition={{ duration: 0.3 }}
-        >
-          ❤
-        </motion.span>
-        
-        <AnimatePresence>
-          {burst > 0 && (
-            <motion.span
-              key={burst}
-              initial={{ scale: 0.3, opacity: 0, y: 0 }}
-              animate={{ scale: 1.2, opacity: 1, y: -20 }}
-              exit={{ opacity: 0, y: -30 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 15 }}
-              className="absolute -top-2 text-pink-500 font-bold text-sm pointer-events-none"
-            >
-              +1
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </motion.button>
-      
-      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-        {likes}
-      </span>
-    </div>
-  );
-}
-
-function CommentBox({ postId, onCommented }: { postId: string; onCommented: () => void }) {
-  const [text, setText] = useState('');
-  const [busy, setBusy] = useState(false);
-  const { csrfToken } = useCsrfToken();
-  const submit = async () => {
-    if (!text.trim()) return;
-    setBusy(true);
-    try {
-      await fetch(`/api/posts/${postId}/comment`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken }, credentials: 'include', body: JSON.stringify({ body: text.trim() }) });
-      setText('');
-      onCommented();
-    } finally { setBusy(false); }
-  };
-  return (
-    <div className="mt-2">
-      <textarea value={text} onChange={e=>setText(e.target.value)} placeholder="Adaugă un comentariu" className="w-full rounded-md border border-slate-300 bg-white/70 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800/60" rows={2} />
-      <div className="mt-1 text-right">
-        <button disabled={busy} onClick={submit} className="rounded-md border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:hover:bg-slate-800">Comentează</button>
-      </div>
-    </div>
   );
 }

@@ -89,7 +89,6 @@ async function getCategories() {
 export default async function RootPage() {
   const cookieStore = await cookies();
   let token = cookieStore.get('token')?.value;
-  const csrfToken = cookieStore.get('csrf')?.value || '';
   if (!token) {
     const hdrs = await headers();
     const cookieHeader = hdrs.get('cookie') || '';
@@ -103,7 +102,7 @@ export default async function RootPage() {
   }
 
   try {
-  const payload = (await verifyAuthToken(token)) as JwtPayload;
+  await verifyAuthToken(token);
   const categories = await getCategories();
     
     return (

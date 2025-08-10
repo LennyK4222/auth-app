@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyAuthToken, type JWTPayload } from '@/lib/auth/jwt';
 import { getUserActiveSessions } from '@/lib/sessions';

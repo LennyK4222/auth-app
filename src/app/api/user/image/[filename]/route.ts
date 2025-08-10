@@ -66,7 +66,7 @@ export async function GET(
     // Check if file exists
     try {
       await access(filePath);
-    } catch (error) {
+    } catch {
       console.log('File not found:', filePath);
       return new NextResponse('Not Found', { status: 404 });
     }

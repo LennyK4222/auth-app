@@ -41,7 +41,6 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
   const { id } = await params; // Keep this line unchanged for context
   const data = await getThread(base, id);
   if (!data) redirect('/');
-  const csrf = cookieStore.get('csrf')?.value || '';
 
   return (
     <main className="relative mx-auto max-w-4xl px-4 py-8">

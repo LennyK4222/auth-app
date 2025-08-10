@@ -4,13 +4,11 @@ import { motion } from 'framer-motion';
 import { 
   Shield, 
   Eye, 
-  EyeOff, 
   Lock, 
   Globe,
   Users,
   UserCheck,
   Download,
-  Trash2,
   AlertTriangle,
   CheckCircle
 } from 'lucide-react';

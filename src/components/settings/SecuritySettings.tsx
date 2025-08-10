@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { useCsrfToken } from '../../hooks/useCsrfToken';
 import { 
-  Shield, 
   Key, 
   Smartphone, 
   Eye, 

@@ -74,7 +74,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   try {
     const { body } = CommentSchema.parse({ body: trimmed });
     bodyText = body;
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Comentariul este gol sau prea scurt.' }, { status: 400 });
   }
   await connectToDatabase();
