@@ -62,6 +62,12 @@ export function UsersManagement() {
       if (response.ok) {
         const data = await response.json();
         setUsers(data.users || []);
+        console.log('Fetched users:', data.users?.length || 0);
+      } else {
+        console.error('Failed to fetch users:', response.status, response.statusText);
+        if (response.status === 401) {
+          console.log('Not authorized - user may need to log out and log back in after promotion');
+        }
       }
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -304,7 +310,89 @@ export function UsersManagement() {
                 }).length}
               </p>
             </div>
-            <Calendar className="w-8 h-8 text-purple-500" />
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Additional Stats Row */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 p-4 backdrop-blur-sm"
+        >
+          <div className="text-center">
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Verified</p>
+            <p className="text-xl font-bold text-emerald-600">
+              {users.filter(u => u.isVerified).length}
+            </p>
+            <p className="text-xs text-slate-500">
+              {users.length > 0 ? Math.round((users.filter(u => u.isVerified).length / users.length) * 100) : 0}%
+            </p>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 p-4 backdrop-blur-sm"
+        >
+          <div className="text-center">
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Moderators</p>
+            <p className="text-xl font-bold text-blue-600">
+              {users.filter(u => u.role === 'moderator').length}
+            </p>
+            <p className="text-xs text-slate-500">Staff</p>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 p-4 backdrop-blur-sm"
+        >
+          <div className="text-center">
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">This Week</p>
+            <p className="text-xl font-bold text-indigo-600">
+              {users.filter(u => {
+                const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+                return new Date(u.createdAt) >= weekAgo;
+              }).length}
+            </p>
+            <p className="text-xs text-slate-500">New users</p>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 p-4 backdrop-blur-sm"
+        >
+          <div className="text-center">
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Total Posts</p>
+            <p className="text-xl font-bold text-orange-600">
+              {users.reduce((sum, u) => sum + (u.postsCount || 0), 0)}
+            </p>
+            <p className="text-xs text-slate-500">All users</p>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+          className="rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 p-4 backdrop-blur-sm"
+        >
+          <div className="text-center">
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Comments</p>
+            <p className="text-xl font-bold text-teal-600">
+              {users.reduce((sum, u) => sum + (u.commentsCount || 0), 0)}
+            </p>
+            <p className="text-xs text-slate-500">All users</p>
           </div>
         </motion.div>
       </div>
