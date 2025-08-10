@@ -59,7 +59,27 @@ All environment variables are pre-configured in `.env.local` including:
 
 ## Deployment
 
-See `DEPLOYMENT.md` for detailed Vercel deployment instructions.
+### Vercel (Recommended)
+1. **Connect repository** to [vercel.com](https://vercel.com)
+2. **Add environment variables** (copy from `.env.local`):
+   ```
+   MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/authapp
+   JWT_SECRET=your_jwt_secret_from_env_local
+   CSRF_SECRET=your_csrf_secret_from_env_local
+   NEXTAUTH_URL=https://your-app.vercel.app
+   NEXTAUTH_SECRET=your_nextauth_secret_from_env_local
+   EMAIL_FROM=noreply@yourdomain.com
+   EMAIL_HOST=smtp.gmail.com
+   EMAIL_PORT=587
+   EMAIL_USER=your_email@gmail.com
+   EMAIL_PASS=your_gmail_app_password
+   ```
+3. **Deploy** - automatic builds on push
+
+### MongoDB Setup
+- **Atlas**: [mongodb.com/atlas](https://mongodb.com/atlas) → Free cluster
+- **Allow all IPs**: `0.0.0.0/0` in Network Access
+- **Copy connection string** to `MONGODB_URI`
 
 ## Project Structure
 
