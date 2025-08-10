@@ -5,10 +5,11 @@ import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 
 interface CreateThreadModalProps {
+  categorySlug: string;
   categoryName: string;
 }
 
-export default function CreateThreadModal({ categoryName }: CreateThreadModalProps) {
+export default function CreateThreadModal({ categorySlug, categoryName }: CreateThreadModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -28,7 +29,7 @@ export default function CreateThreadModal({ categoryName }: CreateThreadModalPro
     try {
       // Get CSRF token
       const csrfRes = await fetch('/api/csrf');
-      const { token: csrfToken } = await csrfRes.json();
+      const { csrfToken } = await csrfRes.json();
 
       const res = await fetch('/api/posts', {
         method: 'POST',
@@ -39,6 +40,7 @@ export default function CreateThreadModal({ categoryName }: CreateThreadModalPro
         body: JSON.stringify({
           title: title.trim(),
           body: content.trim(),
+          category: categorySlug,
         }),
       });
 

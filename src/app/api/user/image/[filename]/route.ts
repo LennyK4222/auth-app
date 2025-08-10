@@ -21,30 +21,52 @@ export async function GET(
       token = request.cookies.get('token')?.value;
     }
     
+    // Also check Authorization header as fallback
     if (!token) {
-      console.log('No token provided in session or token cookies');
-      return new NextResponse('Unauthorized', { status: 401 });
+      const authHeader = request.headers.get('authorization');
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+      }
+    }
+    
+    if (!token) {
+      console.log('No token provided in session or token cookies or authorization header');
+      // In development, allow serving images without authentication for easier testing
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Development mode: serving image without authentication');
+      } else {
+        return new NextResponse('Unauthorized', { status: 401 });
+      }
     }
 
-    let payload: { sub: string; email: string; name?: string };
-    try {
-      console.log('Attempting to verify token:', token?.substring(0, 20) + '...');
-      // Try without session validation first
-      payload = await verifyAuthToken(token, false);
-      console.log('Token verified for user:', payload.sub);
-    } catch (error) {
-      console.log('Invalid token:', error);
-      return new NextResponse('Unauthorized', { status: 401 });
+    let payload: { sub: string; email: string; name?: string } | null = null;
+    
+    if (token) {
+      try {
+        console.log('Attempting to verify token:', token?.substring(0, 20) + '...');
+        // Try without session validation first
+        payload = await verifyAuthToken(token, false);
+        console.log('Token verified for user:', payload.sub);
+      } catch (error) {
+        console.log('Invalid token:', error);
+        if (process.env.NODE_ENV !== 'development') {
+          return new NextResponse('Unauthorized', { status: 401 });
+        }
+      }
     }
 
     // Connect to database
     await connectToDatabase();
 
-    // Verify user exists and is active
-    const user = await User.findById(payload.sub);
-    if (!user) {
-      console.log('User not found:', payload.sub);
-      return new NextResponse('Unauthorized', { status: 401 });
+    // If we have a valid token, verify user exists and is active
+    if (payload) {
+      const user = await User.findById(payload.sub);
+      if (!user) {
+        console.log('User not found:', payload.sub);
+        if (process.env.NODE_ENV !== 'development') {
+          return new NextResponse('Unauthorized', { status: 401 });
+        }
+      }
     }
 
     // Basic filename validation

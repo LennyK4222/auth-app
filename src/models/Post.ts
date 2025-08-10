@@ -7,6 +7,7 @@ export interface IPost {
   authorName?: string;
   title: string;
   body: string;
+  category?: string; // Category slug
   score: number;
   votes: Record<string, 1 | -1>; // key=userId, value=vote
   commentsCount: number;
@@ -20,6 +21,7 @@ const PostSchema = new Schema<IPost>({
   authorName: { type: String },
   title: { type: String, required: true, maxlength: 140 },
   body: { type: String, required: true, maxlength: 5000 },
+  category: { type: String, index: true }, // Category slug for filtering
   score: { type: Number, default: 0, index: true },
   votes: { type: Schema.Types.Mixed, default: {} },
   commentsCount: { type: Number, default: 0 },
@@ -27,5 +29,6 @@ const PostSchema = new Schema<IPost>({
 
 PostSchema.index({ createdAt: -1 });
 PostSchema.index({ score: -1, createdAt: -1 });
+PostSchema.index({ category: 1, createdAt: -1 }); // Index for category filtering
 
 export const Post = models.Post || model<IPost>('Post', PostSchema);

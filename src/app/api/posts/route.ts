@@ -83,17 +83,22 @@ export async function GET(req: NextRequest) {
 const PostSchema = z.object({
   title: z.string().min(1).max(140),
   body: z.string().min(1).max(5000),
+  category: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
-  // Temporary: Skip CSRF in development if no cookies are available
+  // CSRF validation
   const cookieToken = req.cookies.get('csrf')?.value;
   const headerToken = req.headers.get('x-csrf-token');
+  
+  // Skip CSRF in development if no tokens are available
   const shouldSkipCsrf = process.env.NODE_ENV === 'development' && !cookieToken && !headerToken;
   
   if (!shouldSkipCsrf) {
     const csrfOk = await validateCsrf(req);
-    if (!csrfOk) return NextResponse.json({ error: 'CSRF invalid' }, { status: 403 });
+    if (!csrfOk) {
+      return NextResponse.json({ error: 'CSRF invalid' }, { status: 403 });
+    }
   }
   
   const cookieStore = await cookies();
@@ -114,7 +119,22 @@ export async function POST(req: NextRequest) {
     authorName: user.name,
     title: data.title,
     body: data.body,
+    category: data.category,
   });
+
+  // Update category post count if category is provided
+  if (data.category) {
+    try {
+      const { Category } = await import('@/models/Category');
+      await Category.findOneAndUpdate(
+        { slug: data.category },
+        { $inc: { postCount: 1 } }
+      );
+    } catch (categoryError) {
+      console.error('Failed to update category post count:', categoryError);
+      // Continue even if category update fails
+    }
+  }
 
   // Award XP for creating a post
   try {

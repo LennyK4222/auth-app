@@ -73,11 +73,11 @@ async function getCategoryWithPosts(slug: string, sort: string = 'recent') {
     }
 
     // Get posts from this category
-    const posts = await Post.find({ category: category.name })
+    const posts = await Post.find({ category: category.slug })
       .sort(sortQuery)
       .limit(20)
       .populate('authorId', 'name email avatar')
-      .lean() as any[];
+      .lean() as any;
 
     return {
       category: {
@@ -89,7 +89,7 @@ async function getCategoryWithPosts(slug: string, sort: string = 'recent') {
         icon: category.icon,
         postCount: category.postCount
       },
-      posts: posts.map(post => ({
+      posts: posts.map((post: any) => ({
         _id: post._id.toString(),
         title: post.title,
         content: post.content.substring(0, 150) + (post.content.length > 150 ? '...' : ''),
@@ -180,7 +180,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
                 </div>
               </div>
               
-              <CreateThreadModal categoryName={category.name} />
+              <CreateThreadModal categorySlug={category.slug} categoryName={category.name} />
             </div>
           </div>
         </div>
@@ -235,10 +235,24 @@ export default async function CategoryPage({ params, searchParams }: Props) {
               <p className="text-slate-600 dark:text-slate-400 mb-4">
                 Fii primul care începe o discuție!
               </p>
-              <CreateThreadModal categoryName={category.name} />
+              <CreateThreadModal categorySlug={category.slug} categoryName={category.name} />
             </div>
           ) : (
-            posts.map(post => (
+            posts.map((post: {
+              _id: string;
+              title: string;
+              content: string;
+              category: string;
+              createdAt: string;
+              score: number;
+              votes: number;
+              author: {
+                _id?: string;
+                name: string;
+                email?: string;
+                avatar?: string;
+              };
+            }) => (
               <div key={post._id} className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm hover:shadow-md transition">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
