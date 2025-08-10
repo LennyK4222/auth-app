@@ -1,0 +1,132 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { connectToDatabase } from '@/lib/db';
+import { Post } from '@/models/Post';
+import { cookies } from 'next/headers';
+import { verifyAuthToken } from '@/lib/auth/jwt';
+import { z } from 'zod';
+import { validateCsrf } from '@/lib/csrf';
+import { awardXPForPost } from '@/lib/xp';
+
+interface PostDocument {
+  _id: string;
+  title: string;
+  body: string;
+  authorEmail: string;
+  authorName?: string;
+  authorId: string;
+  commentsCount?: number;
+  score?: number;
+  votes?: Record<string, number>;
+  createdAt: Date;
+}
+
+interface AuthUser {
+  sub: string;
+  email: string;
+  name?: string;
+}
+
+type SortDirection = 1 | -1;
+
+export const revalidate = 0;
+
+export async function GET(req: NextRequest) {
+  await connectToDatabase();
+  const url = new URL(req.url);
+  const page = Math.max(1, Number(url.searchParams.get('page') || 1));
+  const pageSize = Math.min(20, Number(url.searchParams.get('pageSize') || 10));
+  const sort = url.searchParams.get('sort') || 'hot'; // hot|new
+  const skip = (page - 1) * pageSize;
+  const sortObj: Record<string, SortDirection> = sort === 'new' 
+    ? { createdAt: -1 } 
+    : { score: -1, createdAt: -1 };
+  const [items, total] = await Promise.all([
+  Post.find({}, { title: 1, body: 1, authorEmail: 1, authorName: 1, authorId: 1, commentsCount: 1, score: 1, createdAt: 1, votes: 1 })
+      .sort(sortObj)
+      .skip(skip)
+      .limit(pageSize)
+      .lean(),
+    Post.countDocuments(),
+  ]);
+  let meSub: string | null = null;
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
+    if (token) {
+      const { verifyAuthToken } = await import('@/lib/auth/jwt');
+      const user = await verifyAuthToken(token) as AuthUser;
+      meSub = String(user.sub);
+    }
+  } catch {}
+
+  return NextResponse.json({ items: items.map(p => {
+    const post = p as unknown as PostDocument;
+    const authorIdStr = String(post.authorId);
+    const meSubStr = String(meSub);
+    const canDelete = meSubStr === authorIdStr;
+    return {
+      id: String(post._id),
+      title: post.title,
+      body: post.body,
+      authorEmail: post.authorEmail,
+      authorName: post.authorName || null,
+      authorId: post.authorId,
+      commentsCount: post.commentsCount || 0,
+      score: post.score || 0,
+      likedByMe: meSub ? Boolean(post.votes && post.votes[meSub] === 1) : false,
+      canDelete: canDelete, // User can delete their own posts
+      createdAt: post.createdAt,
+    };
+  }), total, page, pageSize });
+}
+
+const PostSchema = z.object({
+  title: z.string().min(1).max(140),
+  body: z.string().min(1).max(5000),
+});
+
+export async function POST(req: NextRequest) {
+  // Temporary: Skip CSRF in development if no cookies are available
+  const cookieToken = req.cookies.get('csrf')?.value;
+  const headerToken = req.headers.get('x-csrf-token');
+  const shouldSkipCsrf = process.env.NODE_ENV === 'development' && !cookieToken && !headerToken;
+  
+  if (!shouldSkipCsrf) {
+    const csrfOk = await validateCsrf(req);
+    if (!csrfOk) return NextResponse.json({ error: 'CSRF invalid' }, { status: 403 });
+  }
+  
+  const cookieStore = await cookies();
+  const token = cookieStore.get('token')?.value;
+  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  let user: AuthUser;
+  try {
+    user = await verifyAuthToken(token) as AuthUser;
+  } catch {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const body = await req.json();
+  const data = PostSchema.parse(body);
+  await connectToDatabase();
+  const post = await Post.create({
+    authorId: user.sub,
+    authorEmail: user.email,
+    authorName: user.name,
+    title: data.title,
+    body: data.body,
+  });
+
+  // Award XP for creating a post
+  try {
+    const xpResult = await awardXPForPost(user.sub, String(post._id));
+    if (xpResult?.levelUp) {
+      console.log(`🎉 User ${user.sub} leveled up to ${xpResult.newLevel}!`);
+      // Poți adăuga aici notificări pentru level up
+    }
+  } catch (xpError) {
+    console.error('Failed to award XP for post creation:', xpError);
+    // Continue even if XP fails
+  }
+
+  return NextResponse.json({ id: String(post._id) }, { status: 201 });
+}
