@@ -72,11 +72,24 @@ export async function GET() {
       },
       {
         $project: {
-          password: 0,
+          passwordHash: 0,
           userPosts: 0,
           userComments: 0,
           resetPasswordToken: 0,
-          resetPasswordExpires: 0
+          resetPasswordExpires: 0,
+          resetToken: 0,
+          resetTokenExp: 0,
+          emailChangeToken: 0,
+          emailChangeTokenExp: 0,
+          pendingEmail: 0
+        }
+      },
+      {
+        $addFields: {
+          // Asigură că câmpurile boolean au valori default
+          isActive: { $ifNull: ['$isActive', true] },
+          isVerified: { $ifNull: ['$isVerified', false] },
+          role: { $ifNull: ['$role', 'user'] }
         }
       },
       {
@@ -90,9 +103,20 @@ export async function GET() {
       email: users[0].email,
       role: users[0].role,
       isActive: users[0].isActive,
+      isVerified: users[0].isVerified,
       postsCount: users[0].postsCount,
       commentsCount: users[0].commentsCount
     } : 'No users found');
+
+    // Statistici rapide pentru debugging
+    console.log('📈 Quick stats:', {
+      total: users.length,
+      active: users.filter(u => u.isActive).length,
+      verified: users.filter(u => u.isVerified).length,
+      admins: users.filter(u => u.role === 'admin').length,
+      totalPosts: users.reduce((sum, u) => sum + (u.postsCount || 0), 0),
+      totalComments: users.reduce((sum, u) => sum + (u.commentsCount || 0), 0)
+    });
 
     return NextResponse.json({ users }, { status: 200 });
   } catch (error) {
