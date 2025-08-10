@@ -8,25 +8,42 @@ import { Comment } from '@/models/Comment';
 
 export async function GET() {
   try {
+    console.log('🔍 Admin users API called');
     await connectToDatabase();
 
     // Verifică autentificarea admin
     const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;
     
+    console.log('🍪 Token found:', !!token);
+    
     if (!token) {
+      console.log('❌ No token provided');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const decoded = await verifyAuthToken(token);
+    console.log('🔓 Token decoded:', decoded ? 'success' : 'failed');
+    
     if (!decoded || !decoded.userId) {
+      console.log('❌ Invalid token or missing userId');
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
     const adminUser = await User.findById(decoded.userId);
+    console.log('👤 User found:', {
+      id: adminUser?._id,
+      email: adminUser?.email,
+      role: adminUser?.role,
+      exists: !!adminUser
+    });
+    
     if (!adminUser || adminUser.role !== 'admin') {
+      console.log('🚫 Admin access denied. User role:', adminUser?.role);
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
+
+    console.log('✅ Admin access granted, fetching users...');
 
     // Fetch all users with their post and comment counts
     const users = await User.aggregate([
@@ -65,6 +82,16 @@ export async function GET() {
         $sort: { createdAt: -1 }
       }
     ]);
+
+    console.log('📊 Users fetched:', users.length, 'users found');
+    console.log('📋 Sample user data:', users[0] ? {
+      id: users[0]._id,
+      email: users[0].email,
+      role: users[0].role,
+      isActive: users[0].isActive,
+      postsCount: users[0].postsCount,
+      commentsCount: users[0].commentsCount
+    } : 'No users found');
 
     return NextResponse.json({ users }, { status: 200 });
   } catch (error) {

@@ -166,10 +166,7 @@ export default async function PublicProfilePage({ params }: Props) {
       </div>
     }>
       <PublicProfileView 
-        profile={{
-          ...profileData.user!,
-          role: profileData.user!.role === "moderator" ? "user" : profileData.user!.role
-        }} 
+        profile={profileData.user!} 
         recentPosts={profileData.recentPosts || []}
         likedPosts={profileData.likedPosts || []}
       />
