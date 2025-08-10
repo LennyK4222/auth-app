@@ -92,7 +92,7 @@ async function getCategoryWithPosts(slug: string, sort: string = 'recent') {
       posts: posts.map((post: any) => ({
         _id: post._id.toString(),
         title: post.title,
-        content: post.content.substring(0, 150) + (post.content.length > 150 ? '...' : ''),
+        content: (post.body || '').substring(0, 150) + ((post.body || '').length > 150 ? '...' : ''),
         category: post.category,
         createdAt: post.createdAt.toISOString(),
         score: post.score || 0,
@@ -238,21 +238,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
               <CreateThreadModal categorySlug={category.slug} categoryName={category.name} />
             </div>
           ) : (
-            posts.map((post: {
-              _id: string;
-              title: string;
-              content: string;
-              category: string;
-              createdAt: string;
-              score: number;
-              votes: number;
-              author: {
-                _id?: string;
-                name: string;
-                email?: string;
-                avatar?: string;
-              };
-            }) => (
+            posts.map(post => (
               <div key={post._id} className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm hover:shadow-md transition">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
