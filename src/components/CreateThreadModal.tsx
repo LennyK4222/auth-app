@@ -38,8 +38,7 @@ export default function CreateThreadModal({ categoryName }: CreateThreadModalPro
         },
         body: JSON.stringify({
           title: title.trim(),
-          content: content.trim(),
-          category: categoryName
+          body: content.trim(),
         }),
       });
 
@@ -50,7 +49,7 @@ export default function CreateThreadModal({ categoryName }: CreateThreadModalPro
         setTitle('');
         setContent('');
         router.refresh(); // Refresh the page to show new thread
-        router.push(`/thread/${data.postId}`); // Navigate to the new thread
+        router.push(`/thread/${data.id}`); // Navigate to the new thread (API returns 'id', not 'postId')
       } else {
         const errorData = await res.json();
         toast.error(errorData.error || 'Eroare la crearea thread-ului');
