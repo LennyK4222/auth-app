@@ -36,9 +36,10 @@ npm install
 ```
 
 3. **Environment setup**
-Copy `.env.example` to `.env.local` and configure:
+All environment variables are pre-configured in `.env.local` with secure secrets.
+Optionally update MongoDB URI and email settings:
 ```bash
-cp .env.example .env.local
+# .env.local already exists with all required variables
 ```
 
 4. **Run development server**
@@ -50,9 +51,9 @@ Open [http://localhost:3000](http://localhost:3000) to see the application.
 
 ## Environment Variables
 
-See `.env.example` for required environment variables including:
+All environment variables are pre-configured in `.env.local` including:
 - MongoDB connection
-- JWT secrets
+- JWT secrets (pre-generated)
 - Email configuration
 - CSRF protection
 

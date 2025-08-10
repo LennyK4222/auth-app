@@ -2,20 +2,17 @@
 
 ## Local Development
 
-1. **Copy environment file:**
-```bash
-cp .env.local.example .env.local
-```
+1. **Environment already configured:**
+Your `.env.local` file contains all necessary settings with secure pre-generated secrets.
 
-2. **Update `.env.local` with your values:**
-- Set your MongoDB URI (local or Atlas)
-- Configure email settings for password reset
-- Secrets are pre-generated and secure
-
-3. **Start development:**
+2. **Start development:**
 ```bash
 npm run dev
 ```
+
+3. **Optional updates:**
+- Change `MONGODB_URI` for external database
+- Configure email settings for password reset
 
 ## Production Deployment (Vercel)
 
