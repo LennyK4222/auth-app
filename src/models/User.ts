@@ -5,7 +5,9 @@ export interface IUser extends Document {
   passwordHash: string;
   name?: string;
   username?: string;
-  role?: 'user' | 'admin';
+  role?: 'user' | 'admin' | 'moderator';
+  isActive?: boolean;
+  isVerified?: boolean;
   createdAt: Date;
   updatedAt: Date;
   // optional flows
@@ -63,7 +65,9 @@ const UserSchema = new Schema<IUser>(
     passwordHash: { type: String, required: true },
     name: { type: String },
     username: { type: String },
-    role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    role: { type: String, enum: ['user', 'admin', 'moderator'], default: 'user' },
+    isActive: { type: Boolean, default: true },
+    isVerified: { type: Boolean, default: false },
     pendingEmail: { type: String },
     emailChangeToken: { type: String, index: true },
     emailChangeTokenExp: { type: Date },
