@@ -31,7 +31,7 @@ export async function requireAdmin() {
       name: user.name,
       role: user.role
     };
-  } catch (error) {
+  } catch {
     redirect('/login');
   }
 }

@@ -34,7 +34,7 @@ interface AdminDashboardProps {
 
 type Tab = 'overview' | 'users' | 'posts' | 'categories' | 'analytics' | 'settings';
 
-export function AdminDashboard({ admin }: AdminDashboardProps) {
+export function AdminDashboard({}: AdminDashboardProps) {
   const [activeTab, setActiveTab] = useState<Tab>('overview');
 
   const tabs = [

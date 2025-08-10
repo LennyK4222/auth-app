@@ -33,8 +33,6 @@ import {
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-type JwtPayload = { sub: string; email: string; name?: string; exp?: number };
-
 // Icon mapping pentru categorii
 const iconMap: Record<string, any> = {
   'Code': Code,

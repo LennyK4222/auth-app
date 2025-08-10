@@ -32,7 +32,7 @@ export function parseUserAgent(userAgent: string): Partial<DeviceInfo> {
 }
 
 // Obține informații despre locație pe baza IP-ului (placeholder - poți integra cu un API real)
-export async function getLocationFromIP(_ip: string): Promise<LocationInfo | null> {
+export async function getLocationFromIP(): Promise<LocationInfo | null> {
   try {
     // Aici poți integra cu un API precum ipapi.co, ipgeolocation.io, etc.
     // Pentru demo, returnez null
@@ -59,7 +59,7 @@ export async function createSession(
     ...parseUserAgent(userAgent)
   };
   
-  const location = await getLocationFromIP(ip);
+  const location = await getLocationFromIP();
   
   const session = new Session({
     userId,

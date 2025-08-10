@@ -44,7 +44,7 @@ interface SessionInfo {
   isCurrent: boolean;
 }
 
-export function SecuritySettings({ user }: SecuritySettingsProps) {
+export function SecuritySettings({}: SecuritySettingsProps) {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);

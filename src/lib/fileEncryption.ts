@@ -24,8 +24,7 @@ export function decryptFilename(encryptedFilename: string): string {
       return Buffer.from(encryptedFilename, 'base64url').toString('utf8');
     }
     
-    const [ivHex, encrypted] = encryptedFilename.split(':');
-    const iv = Buffer.from(ivHex, 'hex');
+    const [, encrypted] = encryptedFilename.split(':');
     const decipher = crypto.createDecipher('aes-256-cbc', ENCRYPTION_KEY);
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');
     decrypted += decipher.final('utf8');

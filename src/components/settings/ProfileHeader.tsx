@@ -26,7 +26,7 @@ interface ProfileHeaderProps {
   user: User;
 }
 
-export function ProfileHeader({ user }: ProfileHeaderProps) {
+export function ProfileHeader({}: ProfileHeaderProps) {
   const { profile, updating, updateProfile, uploadImage } = useProfile();
   const [editingBio, setEditingBio] = useState(false);
   const [bioText, setBioText] = useState('');
@@ -42,7 +42,7 @@ export function ProfileHeader({ user }: ProfileHeaderProps) {
     try {
       await updateProfile({ bio: bioText });
       setEditingBio(false);
-    } catch (error) {
+    } catch {
       // Error handled by hook
     }
   };
@@ -55,7 +55,7 @@ export function ProfileHeader({ user }: ProfileHeaderProps) {
   const handleImageUpload = async (file: File, type: 'avatar' | 'cover') => {
     try {
       await uploadImage(file, type);
-    } catch (error) {
+    } catch {
       // Error handled by hook
     }
   };

@@ -23,7 +23,7 @@ interface NotificationSettingsProps {
   user: User;
 }
 
-export function NotificationSettings({ user }: NotificationSettingsProps) {
+export function NotificationSettings({}: NotificationSettingsProps) {
   const [emailNotifications, setEmailNotifications] = useState({
     newComments: true,
     newLikes: true,

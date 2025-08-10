@@ -5,7 +5,6 @@ type Bus = {
 };
 
 declare global {
-  // eslint-disable-next-line no-var
   var __commentsBus: Bus | undefined;
 }
 

@@ -23,7 +23,7 @@ interface PrivacySettingsProps {
   user: User;
 }
 
-export function PrivacySettings({ user }: PrivacySettingsProps) {
+export function PrivacySettings({}: PrivacySettingsProps) {
   const [profileVisibility, setProfileVisibility] = useState('public'); // public, friends, private
   const [showEmail, setShowEmail] = useState(false);
   const [showOnlineStatus, setShowOnlineStatus] = useState(true);

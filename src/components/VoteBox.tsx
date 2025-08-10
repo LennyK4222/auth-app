@@ -39,7 +39,7 @@ export default function VoteBox({ postId, score: initial }: { postId: string; sc
         // Revert on error
         setScore(prevScore);
       }
-    } catch (error) {
+    } catch {
       // Revert on error
       setScore(prevScore);
     } finally {

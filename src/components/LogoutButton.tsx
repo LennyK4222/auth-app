@@ -30,7 +30,7 @@ export function LogoutButton() {
         const data = await res.json().catch(() => ({}));
         toast.error(data.error || 'Logout failed');
       }
-    } catch (error) {
+    } catch {
       toast.error('Network error during logout');
     }
   };
