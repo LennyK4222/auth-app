@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { verifyAuthToken } from '@/lib/auth/jwt';
+import { verifyAuthToken, type JWTPayload } from '@/lib/auth/jwt';
 import { connectToDatabase } from '@/lib/db';
 import { Comment } from '@/models/Comment';
 import { Post } from '@/models/Post';
@@ -13,13 +13,13 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const cookieStore = await cookies();
   const token = cookieStore.get('token')?.value;
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  let user: any;
+  let user: JWTPayload;
   try { user = await verifyAuthToken(token); } catch { return NextResponse.json({ error: 'Unauthorized' }, { status: 401 }); }
   await connectToDatabase();
   const { id, commentId } = await params;
   const comment = await Comment.findById(commentId);
   if (!comment) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  if (String((comment as any).authorId) !== String(user.sub)) {
+  if (String((comment as { authorId?: string }).authorId) !== String(user.sub)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
   await Comment.deleteOne({ _id: commentId });
@@ -54,13 +54,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const cookieStore = await cookies();
   const token = cookieStore.get('token')?.value;
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  let user: any;
+  let user: JWTPayload;
   try { user = await verifyAuthToken(token); } catch { return NextResponse.json({ error: 'Unauthorized' }, { status: 401 }); }
 
   await connectToDatabase();
   const comment = await Comment.findById(commentId);
   if (!comment) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  if (String((comment as any).authorId) !== String(user.sub)) {
+  if (String((comment as { authorId?: string }).authorId) !== String(user.sub)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
   await Comment.deleteOne({ _id: commentId });

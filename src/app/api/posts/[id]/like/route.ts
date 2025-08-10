@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { verifyAuthToken } from '@/lib/auth/jwt';
+import { verifyAuthToken, type JWTPayload } from '@/lib/auth/jwt';
 import { connectToDatabase } from '@/lib/db';
 import { Post } from '@/models/Post';
 import { validateCsrf } from '@/lib/csrf';
@@ -20,14 +20,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const cookieStore = await cookies();
   const token = cookieStore.get('token')?.value;
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  let user: any;
+  let user: JWTPayload;
   try { user = await verifyAuthToken(token); } catch { return NextResponse.json({ error: 'Unauthorized' }, { status: 401 }); }
 
   await connectToDatabase();
   const { id } = await params;
   const post = await Post.findById(id);
   if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  const votes = (post as any).votes || {};
+  const votes = (post as { votes?: Record<string, number> }).votes || {};
   const userKey = String(user.sub);
   const prev = votes[userKey];
   let liked: boolean;
@@ -49,11 +49,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   await post.save();
   
   // Award XP to the post author when they receive a like (only when liking, not unliking)
-  if (liked && (post as any).authorId && String((post as any).authorId) !== userKey) {
+  if (liked && (post as { authorId?: string }).authorId && String((post as { authorId?: string }).authorId) !== userKey) {
     try {
-      const xpResult = await awardXPForLike(String((post as any).authorId), 'post', id);
+      const xpResult = await awardXPForLike(String((post as { authorId?: string }).authorId), 'post', id);
       if (xpResult?.levelUp) {
-        console.log(`🎉 Post author ${(post as any).authorId} leveled up to ${xpResult.newLevel}!`);
+        console.log(`🎉 Post author ${(post as { authorId?: string }).authorId} leveled up to ${xpResult.newLevel}!`);
       }
     } catch (xpError) {
       console.error('Failed to award XP for like:', xpError);

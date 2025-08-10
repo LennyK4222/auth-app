@@ -6,6 +6,15 @@ import { Post } from '@/models/Post';
 import { Comment } from '@/models/Comment';
 import { PublicProfileView } from '@/components/profile/PublicProfileView';
 
+interface PostData {
+  _id: string;
+  title?: string;
+  content?: string;
+  category?: string;
+  createdAt: Date;
+  votes?: Record<string, number>;
+}
+
 interface Props {
   params: Promise<{ userId: string }>;
 }
