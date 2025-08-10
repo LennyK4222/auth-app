@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ToasterClient } from "@/components/ToasterClient";
 import { LogoutButton } from "@/components/LogoutButton";
 import { AppProvider } from "@/hooks/useApp";
+import { UserActivityTracker } from "@/components/UserActivityTracker";
 import "./globals.css";
 import { cookies } from "next/headers";
 import { verifyAuthToken } from "@/lib/auth/jwt";
@@ -135,7 +136,9 @@ export default async function RootLayout({
           </div>
         </nav>
         <AppProvider>
-          {children}
+          <UserActivityTracker>
+            {children}
+          </UserActivityTracker>
         </AppProvider>
         <ToasterClient />
       </body>

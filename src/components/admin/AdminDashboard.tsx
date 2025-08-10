@@ -19,7 +19,7 @@ import { UsersManagement } from '@/components/admin/UsersManagement';
 import { CategoriesManagement } from '@/components/admin/CategoriesManagement';
 import { PostsManagement } from '@/components/admin/PostsManagement';
 import { SystemSettings } from '@/components/admin/SystemSettings';
-import { Analytics } from '@/components/admin/Analytics';
+import UserAnalytics from '@/components/admin/UserAnalytics';
 
 interface Admin {
   userId: string;
@@ -39,10 +39,10 @@ export function AdminDashboard({}: AdminDashboardProps) {
 
   const tabs = [
     { id: 'overview', label: 'Prezentare generală', icon: BarChart3 },
+    { id: 'analytics', label: 'Statistici utilizatori', icon: TrendingUp },
     { id: 'users', label: 'Utilizatori', icon: Users },
     { id: 'posts', label: 'Postări', icon: MessageSquare },
     { id: 'categories', label: 'Categorii', icon: Tag },
-    { id: 'analytics', label: 'Analiză', icon: TrendingUp },
     { id: 'settings', label: 'Setări sistem', icon: Settings },
   ] as const;
 
@@ -50,14 +50,14 @@ export function AdminDashboard({}: AdminDashboardProps) {
     switch (activeTab) {
       case 'overview':
         return <OverviewTab />;
+      case 'analytics':
+        return <UserAnalytics />;
       case 'users':
         return <UsersManagement />;
       case 'posts':
         return <PostsManagement />;
       case 'categories':
         return <CategoriesManagement />;
-      case 'analytics':
-        return <Analytics />;
       case 'settings':
         return <SystemSettings />;
       default:
