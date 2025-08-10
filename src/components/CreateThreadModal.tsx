@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Plus, X, MessageSquare } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import { useApp } from '@/hooks/useApp';
 
 interface CreateThreadModalProps {
   categorySlug: string;
@@ -15,6 +16,7 @@ export default function CreateThreadModal({ categorySlug, categoryName }: Create
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  const { incrementCategoryCount, triggerRefresh } = useApp();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,8 +52,13 @@ export default function CreateThreadModal({ categorySlug, categoryName }: Create
         setIsOpen(false);
         setTitle('');
         setContent('');
-        router.refresh(); // Refresh the page to show new thread
-        router.push(`/thread/${data.id}`); // Navigate to the new thread (API returns 'id', not 'postId')
+        
+        // Update category count in real-time
+        incrementCategoryCount(categorySlug);
+        triggerRefresh();
+        
+        // Navigate to the new thread (API returns 'id', not 'postId')
+        router.push(`/thread/${data.id}`);
       } else {
         const errorData = await res.json();
         toast.error(errorData.error || 'Eroare la crearea thread-ului');

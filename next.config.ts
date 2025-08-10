@@ -5,6 +5,21 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
   },
   
+  // Image domains for external avatars
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3000',
+      }
+    ],
+  },
+  
   // Headers to improve font loading
   headers: async () => [
     {

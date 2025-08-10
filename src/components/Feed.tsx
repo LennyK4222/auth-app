@@ -2,8 +2,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/components/ui/toast';
-import { MessageSquare, TrendingUp, Clock, User, Trash2 } from 'lucide-react';
+import { MessageSquare, TrendingUp, Clock, Trash2, Tag } from 'lucide-react';
 import { useCsrfToken } from '@/hooks/useCsrfToken';
+import { ConfirmDialog } from '@/components/ui/dialog';
+import Image from 'next/image';
 import LikeButton from './LikeButton';
 
 interface FeedPost {
@@ -12,6 +14,7 @@ interface FeedPost {
   authorId: string;
   authorEmail: string;
   authorName?: string;
+  authorAvatar?: string;
   title: string;
   body: string;
   score: number;
@@ -21,6 +24,7 @@ interface FeedPost {
   updatedAt: string;
   likedByMe?: boolean;
   canDelete?: boolean;
+  category?: string;
 }
 
 function timeAgo(iso?: string | null) {
@@ -35,12 +39,43 @@ function timeAgo(iso?: string | null) {
   return `${d}d`;
 }
 
+function getCategoryDisplayName(categorySlug?: string) {
+  if (!categorySlug) return 'General';
+  
+  const categoryNames: Record<string, string> = {
+    'tehnologie': 'Tehnologie',
+    'fotografie': 'Fotografie',
+    'gaming': 'Gaming',
+    'muzica': 'Muzică',
+    'educatie': 'Educație',
+    'business': 'Business',
+    'general': 'General',
+  };
+  
+  return categoryNames[categorySlug] || categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1);
+}
+
+function getInitials(name?: string, email?: string) {
+  if (name) {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  }
+  if (email) {
+    return email.slice(0, 2).toUpperCase();
+  }
+  return 'U';
+}
+
 export default function Feed() {
   const [items, setItems] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sort, setSort] = useState<'hot'|'new'>('hot');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; postId: string | null; postTitle: string }>({
+    isOpen: false,
+    postId: null,
+    postTitle: ''
+  });
   const { toast, ToastContainer } = useToast();
   const { csrfToken } = useCsrfToken();
 
@@ -65,12 +100,7 @@ export default function Feed() {
   }, [sort, toast]);
 
   const deletePost = async (postId: string) => {
-    if (!csrfToken) return;
-    
-    // Ask for confirmation
-    if (!confirm('Ești sigur că vrei să ștergi această postare? Această acțiune nu poate fi anulată.')) {
-      return;
-    }
+    if (!deleteDialog.postId || !csrfToken) return;
     
     setDeletingId(postId);
     try {
@@ -91,9 +121,12 @@ export default function Feed() {
       setItems(prev => prev.filter(item => item.id !== postId));
       
       toast({
-        title: "Success",
-        description: "Postarea a fost ștearsă cu succes"
+        title: "Succes!",
+        description: "Postarea a fost ștearsă cu succes",
+        variant: "success"
       });
+      
+      setDeleteDialog({ isOpen: false, postId: null, postTitle: '' });
     } catch (e: unknown) {
       const error = e as Error;
       toast({
@@ -104,6 +137,22 @@ export default function Feed() {
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const openDeleteDialog = (postId: string, postTitle: string) => {
+    setDeleteDialog({
+      isOpen: true,
+      postId,
+      postTitle
+    });
+  };
+
+  const closeDeleteDialog = () => {
+    setDeleteDialog({
+      isOpen: false,
+      postId: null,
+      postTitle: ''
+    });
   };
 
   useEffect(() => { load(); }, [load]);
@@ -218,33 +267,41 @@ export default function Feed() {
                         </a>
                       </h3>
                       <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 shrink-0">
-                        <div className="flex items-center gap-1">
-                          <User size={12} />
-                          <span 
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              window.location.href = `/profile/${p.authorId}`;
-                            }}
-                            className="hover:text-blue-600 dark:hover:text-blue-400 hover:underline transition-colors cursor-pointer"
-                          >
+                        <div 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            window.location.href = `/profile/${p.authorId}`;
+                          }}
+                          className="flex items-center gap-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer group"
+                        >
+                          {p.authorAvatar ? (
+                            <Image 
+                              src={p.authorAvatar} 
+                              alt={p.authorName || p.authorEmail}
+                              width={24}
+                              height={24}
+                              className="w-6 h-6 rounded-full object-cover border border-slate-200 dark:border-slate-700 group-hover:border-blue-300 dark:group-hover:border-blue-600 transition-colors"
+                            />
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-medium group-hover:from-blue-500 group-hover:to-indigo-600 transition-all">
+                              {getInitials(p.authorName, p.authorEmail)}
+                            </div>
+                          )}
+                          <span className="hover:underline">
                             {p.authorName || p.authorEmail}
                           </span>
                         </div>
                         {p.canDelete && (
                           <motion.button
-                            onClick={() => deletePost(p.id)}
+                            onClick={() => openDeleteDialog(p.id, p.title)}
                             disabled={deletingId === p.id}
                             className="p-1 rounded hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors disabled:opacity-50"
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.95 }}
                             title="Șterge postarea"
                           >
-                            {deletingId === p.id ? (
-                              <div className="w-3 h-3 border border-red-500 border-t-transparent rounded-full animate-spin" />
-                            ) : (
-                              <Trash2 size={12} />
-                            )}
+                            <Trash2 size={12} />
                           </motion.button>
                         )}
                       </div>
@@ -263,6 +320,12 @@ export default function Feed() {
                         <Clock size={12} />
                         <span>{timeAgo(p.createdAt)}</span>
                       </div>
+                      <div className="flex items-center gap-1">
+                        <Tag size={12} />
+                        <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-xs font-medium">
+                          {getCategoryDisplayName(p.category)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -271,6 +334,19 @@ export default function Feed() {
           </AnimatePresence>
         </motion.div>
       )}
+      
+      {/* Dialog de confirmare pentru ștergere */}
+      <ConfirmDialog
+        isOpen={deleteDialog.isOpen}
+        onClose={closeDeleteDialog}
+        onConfirm={() => deletePost(deleteDialog.postId!)}
+        title="Șterge postarea"
+        message={`Ești sigur că vrei să ștergi postarea "${deleteDialog.postTitle}"? Această acțiune nu poate fi anulată.`}
+        confirmText="Șterge"
+        cancelText="Anulează"
+        isDestructive={true}
+        isLoading={deletingId === deleteDialog.postId}
+      />
     </div>
   );
 }

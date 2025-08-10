@@ -5,10 +5,12 @@ import Link from 'next/link';
 import { RecentUsersWidget } from '@/components/RecentUsersWidget';
 import { Heartbeat } from '@/components/Heartbeat';
 import Feed from '../components/Feed';
+import { ClientCategories } from '@/components/ClientCategories';
 import { connectToDatabase } from '@/lib/db';
 import { Category } from '@/models/Category';
+import { Post } from '@/models/Post';
 import { 
-  TrendingUp, 
+  TrendingUp,
   Users, 
   MessageSquare, 
   Heart, 
@@ -16,37 +18,12 @@ import {
   Star,
   Bookmark,
   Award,
-  Zap,
-  Globe,
-  Code,
-  Camera,
-  Music,
-  GamepadIcon,
-  BookOpen,
-  Briefcase,
-  Car,
-  Utensils,
-  Plane
+  Zap
 } from 'lucide-react';
 
 // Ensure this page is always rendered dynamically so auth via cookies is fresh
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-
-// Icon mapping pentru categorii
-const iconMap: Record<string, React.ComponentType> = {
-  'Code': Code,
-  'Camera': Camera,
-  'Music': Music,
-  'GamepadIcon': GamepadIcon,
-  'BookOpen': BookOpen,
-  'Briefcase': Briefcase,
-  'Car': Car,
-  'Utensils': Utensils,
-  'Plane': Plane,
-  'Globe': Globe,
-  'Tag': TrendingUp, // Default icon
-};
 
 async function getCategories() {
   try {
@@ -58,28 +35,42 @@ async function getCategories() {
       .sort({ name: 1 })
       .lean();
 
-    // Map database categories to UI format with proper icons
-    return categories.map(cat => ({
-      name: cat.name,
-      slug: cat.slug,
-      count: cat.postCount > 0 ? 
-        cat.postCount > 999 ? `${(cat.postCount/1000).toFixed(1)}k` : cat.postCount.toString() 
-        : '0',
-      color: cat.color,
-      icon: iconMap[cat.icon] || TrendingUp,
-      description: cat.description
-    }));
+    // Calculate real post counts for each category
+    const categoriesWithCounts = await Promise.all(
+      categories.map(async (cat) => {
+        // Count actual posts for this category
+        const realPostCount = await Post.countDocuments({ category: cat.slug });
+        
+        // Update the stored count if it's different
+        if (realPostCount !== cat.postCount) {
+          await Category.findByIdAndUpdate(cat._id, { postCount: realPostCount });
+        }
+        
+        return {
+          name: cat.name,
+          slug: cat.slug,
+          count: realPostCount > 0 ? 
+            realPostCount > 999 ? `${(realPostCount/1000).toFixed(1)}k` : realPostCount.toString() 
+            : '0',
+          color: cat.color,
+          icon: cat.icon, // Pasăm doar numele icon-ului
+          description: cat.description
+        };
+      })
+    );
+
+    return categoriesWithCounts;
   } catch (error) {
     console.error('Error fetching categories from database:', error);
     
     // Fallback to static categories if database fails
     return [
-      { name: 'Tehnologie', slug: 'tehnologie', count: '2.1k', color: 'from-blue-500 to-indigo-600', icon: Code },
-      { name: 'Fotografie', slug: 'fotografie', count: '890', color: 'from-purple-500 to-pink-600', icon: Camera },
-      { name: 'Gaming', slug: 'gaming', count: '3.2k', color: 'from-red-500 to-orange-600', icon: GamepadIcon },
-      { name: 'Muzică', slug: 'muzica', count: '1.5k', color: 'from-green-500 to-emerald-600', icon: Music },
-      { name: 'Educație', slug: 'educatie', count: '756', color: 'from-yellow-500 to-amber-600', icon: BookOpen },
-      { name: 'Business', slug: 'business', count: '942', color: 'from-slate-500 to-slate-600', icon: Briefcase },
+      { name: 'Tehnologie', slug: 'tehnologie', count: '2.1k', color: 'from-blue-500 to-indigo-600', icon: 'Code' },
+      { name: 'Fotografie', slug: 'fotografie', count: '890', color: 'from-purple-500 to-pink-600', icon: 'Camera' },
+      { name: 'Gaming', slug: 'gaming', count: '3.2k', color: 'from-red-500 to-orange-600', icon: 'GamepadIcon' },
+      { name: 'Muzică', slug: 'muzica', count: '1.5k', color: 'from-green-500 to-emerald-600', icon: 'Music' },
+      { name: 'Educație', slug: 'educatie', count: '756', color: 'from-yellow-500 to-amber-600', icon: 'BookOpen' },
+      { name: 'Business', slug: 'business', count: '942', color: 'from-slate-500 to-slate-600', icon: 'Briefcase' },
     ];
   }
 }
@@ -167,20 +158,8 @@ export default async function RootPage() {
             </Link>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {categories.map((category) => (
-              <Link
-                key={category.name}
-                href={`/category/${category.slug}`}
-                className="group relative overflow-hidden rounded-xl bg-white shadow-sm dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 hover:shadow-lg transition-all duration-300"
-              >
-                <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${category.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
-                  <category.icon className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="font-semibold text-slate-900 dark:text-white text-sm">{category.name}</h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400">{category.count} postări</p>
-              </Link>
-            ))}
+          <div className="bg-white shadow-sm dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
+            <ClientCategories initialCategories={categories} />
           </div>
         </section>
 

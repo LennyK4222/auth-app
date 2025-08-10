@@ -2,10 +2,56 @@ import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { verifyAuthToken } from '@/lib/auth/jwt';
 import Link from 'next/link';
+import Image from 'next/image';
 import { connectToDatabase } from '@/lib/db';
 import { Category } from '@/models/Category';
 import { Post } from '@/models/Post';
 import { Heartbeat } from '@/components/Heartbeat';
+
+// TypeScript interfaces for lean() query results
+interface CategoryLean {
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  color: string;
+  icon: string;
+  postCount: number;
+  isActive: boolean;
+}
+
+interface PostLean {
+  _id: string;
+  title: string;
+  body?: string;
+  category: string;
+  createdAt: Date;
+  score?: number;
+  votes?: Record<string, number>;
+  authorId: {
+    _id: string;
+    name?: string;
+    email: string;
+    avatar?: string;
+  };
+}
+
+// Interface for transformed post data used in component
+interface TransformedPost {
+  _id: string;
+  title: string;
+  content: string;
+  category: string;
+  createdAt: string;
+  score: number;
+  votes: number;
+  author: {
+    _id: string;
+    name: string;
+    email: string;
+    avatar?: string;
+  };
+}
 import { 
   MessageSquare, 
   Heart, 
@@ -56,7 +102,7 @@ async function getCategoryWithPosts(slug: string, sort: string = 'recent') {
     await connectToDatabase();
     
     // Get category
-    const category = await Category.findOne({ slug, isActive: true }).lean() as any;
+    const category = await Category.findOne({ slug, isActive: true }).lean() as unknown as CategoryLean;
     if (!category) return null;
 
     // Sort logic
@@ -77,7 +123,7 @@ async function getCategoryWithPosts(slug: string, sort: string = 'recent') {
       .sort(sortQuery)
       .limit(20)
       .populate('authorId', 'name email avatar')
-      .lean() as any;
+      .lean() as unknown as PostLean[];
 
     return {
       category: {
@@ -89,7 +135,7 @@ async function getCategoryWithPosts(slug: string, sort: string = 'recent') {
         icon: category.icon,
         postCount: category.postCount
       },
-      posts: posts.map((post: any) => ({
+      posts: posts.map((post: PostLean) => ({
         _id: post._id.toString(),
         title: post.title,
         content: (post.body || '').substring(0, 150) + ((post.body || '').length > 150 ? '...' : ''),
@@ -238,7 +284,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
               <CreateThreadModal categorySlug={category.slug} categoryName={category.name} />
             </div>
           ) : (
-            posts.map((post: any) => (
+            posts.map((post: TransformedPost) => (
               <div key={post._id} className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm hover:shadow-md transition">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
@@ -254,10 +300,12 @@ export default async function CategoryPage({ params, searchParams }: Props) {
                     <div className="flex items-center space-x-4 mt-4 text-sm text-slate-500 dark:text-slate-400">
                       <div className="flex items-center space-x-2">
                         {post.author.avatar ? (
-                          <img 
+                          <Image 
                             src={post.author.avatar} 
                             alt={post.author.name}
-                            className="w-6 h-6 rounded-full"
+                            width={24}
+                            height={24}
+                            className="w-6 h-6 rounded-full object-cover"
                           />
                         ) : (
                           <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
@@ -291,7 +339,7 @@ export async function generateMetadata({ params }: Props) {
   
   try {
     await connectToDatabase();
-    const category = await Category.findOne({ slug, isActive: true }).lean() as any;
+    const category = await Category.findOne({ slug, isActive: true }).lean() as unknown as CategoryLean;
     
     if (!category) {
       return { title: 'Categoria nu a fost găsită' };

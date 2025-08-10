@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import Link from "next/link";
 import { ToasterClient } from "@/components/ToasterClient";
 import { LogoutButton } from "@/components/LogoutButton";
+import { AppProvider } from "@/hooks/useApp";
 import "./globals.css";
 import { cookies } from "next/headers";
 import { verifyAuthToken } from "@/lib/auth/jwt";
@@ -133,7 +134,9 @@ export default async function RootLayout({
             </div>
           </div>
         </nav>
-        {children}
+        <AppProvider>
+          {children}
+        </AppProvider>
         <ToasterClient />
       </body>
     </html>

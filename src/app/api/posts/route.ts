@@ -13,11 +13,12 @@ interface PostDocument {
   body: string;
   authorEmail: string;
   authorName?: string;
-  authorId: string;
+  authorId: string | { avatar?: string; name?: string; email?: string; _id: string };
   commentsCount?: number;
   score?: number;
   votes?: Record<string, number>;
   createdAt: Date;
+  category?: string;
 }
 
 interface AuthUser {
@@ -41,7 +42,8 @@ export async function GET(req: NextRequest) {
     ? { createdAt: -1 } 
     : { score: -1, createdAt: -1 };
   const [items, total] = await Promise.all([
-  Post.find({}, { title: 1, body: 1, authorEmail: 1, authorName: 1, authorId: 1, commentsCount: 1, score: 1, createdAt: 1, votes: 1 })
+    Post.find({}, { title: 1, body: 1, authorEmail: 1, authorName: 1, authorId: 1, commentsCount: 1, score: 1, createdAt: 1, votes: 1, category: 1 })
+      .populate('authorId', 'avatar name email')
       .sort(sortObj)
       .skip(skip)
       .limit(pageSize)
@@ -61,21 +63,25 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({ items: items.map(p => {
     const post = p as unknown as PostDocument;
-    const authorIdStr = String(post.authorId);
+    const authorIdStr = typeof post.authorId === 'object' ? String(post.authorId._id) : String(post.authorId);
     const meSubStr = String(meSub);
     const canDelete = meSubStr === authorIdStr;
+    const authorData = typeof post.authorId === 'object' ? post.authorId : null;
+    
     return {
       id: String(post._id),
       title: post.title,
       body: post.body,
       authorEmail: post.authorEmail,
-      authorName: post.authorName || null,
-      authorId: post.authorId,
+      authorName: post.authorName || authorData?.name || null,
+      authorId: authorIdStr,
+      authorAvatar: authorData?.avatar || null,
       commentsCount: post.commentsCount || 0,
       score: post.score || 0,
       likedByMe: meSub ? Boolean(post.votes && post.votes[meSub] === 1) : false,
       canDelete: canDelete, // User can delete their own posts
       createdAt: post.createdAt,
+      category: post.category || 'general',
     };
   }), total, page, pageSize });
 }
