@@ -1,6 +1,7 @@
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { verifyAuthToken } from '@/lib/auth/jwt';
+import type { JWTPayload } from '@/lib/auth/jwt';
 import Link from 'next/link';
 import CommentsSection from '@/components/CommentsSection';
 import { ArrowLeft, User, Clock, MessageSquare } from 'lucide-react';
@@ -30,7 +31,7 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
   const cookieStore = await cookies();
   const token = cookieStore.get('token')?.value;
   if (!token) redirect('/login');
-  let user: any;
+  let user: JWTPayload;
   try { user = await verifyAuthToken(token); } catch { redirect('/login'); }
 
   const hdrs = await headers();

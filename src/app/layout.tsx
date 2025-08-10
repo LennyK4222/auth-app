@@ -40,8 +40,8 @@ export default async function RootLayout({
       
       isAuthed = true;
       userInfo = {
-        name: user?.name || (payload as any).name,
-        email: user?.email || (payload as any).email,
+        name: user?.name || (payload as { name?: string }).name || '',
+        email: user?.email || (payload as { email?: string }).email || '',
         role: user?.role || 'user'
       };
     } catch {}

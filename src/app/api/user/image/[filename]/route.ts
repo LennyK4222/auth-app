@@ -26,7 +26,7 @@ export async function GET(
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    let payload: any;
+    let payload: { sub: string; email: string; name?: string };
     try {
       console.log('Attempting to verify token:', token?.substring(0, 20) + '...');
       // Try without session validation first

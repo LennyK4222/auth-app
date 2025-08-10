@@ -3,6 +3,26 @@ import { connectToDatabase } from '@/lib/db';
 import { Post } from '@/models/Post';
 import { Comment } from '@/models/Comment';
 import { verifyAuthToken } from '@/lib/auth/jwt';
+
+interface PostDoc {
+  _id: string;
+  title: string;
+  body: string;
+  authorEmail: string;
+  authorName?: string;
+  commentsCount: number;
+  score: number;
+  createdAt: Date;
+}
+
+interface CommentDoc {
+  _id: string;
+  body: string;
+  authorEmail: string;
+  authorName?: string;
+  authorId: string;
+  createdAt: Date;
+}
 import { validateCsrf } from '@/lib/csrf';
 import { cookies } from 'next/headers';
 
@@ -11,19 +31,26 @@ export const revalidate = 0;
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   await connectToDatabase();
   const { id } = await params;
-  const post = await Post.findById(id).lean();
+  const post = await Post.findById(id).lean() as unknown as PostDoc;
   if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  const comments = await Comment.find({ postId: id }, { body: 1, authorEmail: 1, authorName: 1, authorId: 1, createdAt: 1 }).sort({ createdAt: 1 }).lean();
+  const comments = await Comment.find({ postId: id }, { body: 1, authorEmail: 1, authorName: 1, authorId: 1, createdAt: 1 }).sort({ createdAt: 1 }).lean() as unknown as CommentDoc[];
   return NextResponse.json({
-    id: String((post as any)._id),
-    title: (post as any).title,
-    body: (post as any).body,
-    authorEmail: (post as any).authorEmail,
-    authorName: (post as any).authorName || null,
-    commentsCount: (post as any).commentsCount || 0,
-    score: (post as any).score || 0,
-    createdAt: (post as any).createdAt,
-  comments: comments.map(c => ({ id: String((c as any)._id), body: (c as any).body, authorEmail: (c as any).authorEmail, authorName: (c as any).authorName || null, authorId: String((c as any).authorId), createdAt: (c as any).createdAt })),
+    id: String(post._id),
+    title: post.title,
+    body: post.body,
+    authorEmail: post.authorEmail,
+    authorName: post.authorName || null,
+    commentsCount: post.commentsCount || 0,
+    score: post.score || 0,
+    createdAt: post.createdAt,
+  comments: comments.map(c => ({ 
+    id: String(c._id), 
+    body: c.body, 
+    authorEmail: c.authorEmail, 
+    authorName: c.authorName || null, 
+    authorId: String(c.authorId), 
+    createdAt: c.createdAt 
+  })),
   });
 }
 

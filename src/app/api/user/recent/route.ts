@@ -4,6 +4,16 @@ import { connectToDatabase } from '@/lib/db';
 import { User } from '@/models/User';
 import { verifyAuthToken } from '@/lib/auth/jwt';
 
+interface UserDoc {
+  _id: string;
+  email: string;
+  name?: string;
+  avatar?: string;
+  createdAt: Date;
+  lastLoginAt?: Date;
+  lastSeenAt?: Date;
+}
+
 export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
@@ -17,7 +27,7 @@ export async function GET(req: NextRequest) {
       const token = cookieStore.get('token')?.value;
       if (token) {
         const payload = await verifyAuthToken(token as string);
-        requesterId = String((payload as any).sub || '');
+        requesterId = String(payload.sub || '');
       }
     } catch {}
 
@@ -25,26 +35,26 @@ export async function GET(req: NextRequest) {
     const users = await User.find({}, { email: 1, name: 1, avatar: 1, createdAt: 1, lastLoginAt: 1, lastSeenAt: 1 })
       .sort({ lastSeenAt: -1, lastLoginAt: -1, createdAt: -1 })
       .limit(limit)
-      .lean();
+      .lean() as unknown as UserDoc[];
 
     // Ensure the requester is present
-    if (requesterId && !users.some(u => String((u as any)._id) === requesterId)) {
-      const me = await User.findById(requesterId, { email: 1, name: 1, avatar: 1, createdAt: 1, lastLoginAt: 1, lastSeenAt: 1 }).lean();
+    if (requesterId && !users.some(u => String(u._id) === requesterId)) {
+      const me = await User.findById(requesterId, { email: 1, name: 1, avatar: 1, createdAt: 1, lastLoginAt: 1, lastSeenAt: 1 }).lean() as unknown as UserDoc;
       if (me) {
-        users.unshift(me as any);
+        users.unshift(me);
       }
     }
     const now = Date.now();
   const seen = new Set<string>();
   const list = users.map(u => ({
-      id: String((u as any)._id),
-      name: (u as any).name || null,
-      email: (u as any).email,
-      avatar: (u as any).avatar || null,
-      createdAt: (u as any).createdAt,
-      lastLoginAt: (u as any).lastLoginAt || null,
-      lastSeenAt: (u as any).lastSeenAt || null,
-      online: (u as any).lastSeenAt ? (now - new Date((u as any).lastSeenAt).getTime() < 60_000) : false,
+      id: String(u._id),
+      name: u.name || null,
+      email: u.email,
+      avatar: u.avatar || null,
+      createdAt: u.createdAt,
+      lastLoginAt: u.lastLoginAt || null,
+      lastSeenAt: u.lastSeenAt || null,
+      online: u.lastSeenAt ? (now - new Date(u.lastSeenAt).getTime() < 60_000) : false,
   }))
   // de-duplicate and enforce limit
   .filter(u => (seen.has(u.id) ? false : (seen.add(u.id), true)))
