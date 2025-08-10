@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useMemo, useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 
 type Item = { id: string; name: string | null; email: string; avatar: string | null; createdAt: string; lastLoginAt: string | null; lastSeenAt?: string | null; online?: boolean };
 
@@ -37,12 +38,14 @@ function UserAvatar({ user, size = 7 }: { user: Item; size?: number }) {
   }
 
   return (
-    <img 
+    <Image 
       src={user.avatar} 
       alt={user.name || user.email}
       className="rounded-md object-cover ring-1 ring-white/20"
       style={{ height: sizeInRem, width: sizeInRem }}
       onError={() => setImageError(true)}
+      width={parseInt(sizeInRem)}
+      height={parseInt(sizeInRem)}
     />
   );
 }
@@ -105,7 +108,7 @@ export function RecentUsersWidget({ className = '' }: { className?: string }) {
         <div className="text-sm text-slate-500">Încă nimic de afișat.</div>
       ) : (
         <ul className="space-y-2">
-          {shown.map((u) => (
+          {shown.map((u: Item) => (
             <li key={u.id} className="flex items-center gap-2 rounded-xl bg-white/60 p-2 dark:bg-slate-900/60">
               <div className="relative">
                 <UserAvatar user={u} size={7} />

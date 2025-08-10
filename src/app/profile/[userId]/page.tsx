@@ -5,18 +5,24 @@ import { User } from '@/models/User';
 import { Post } from '@/models/Post';
 import { Comment } from '@/models/Comment';
 import { PublicProfileView } from '@/components/profile/PublicProfileView';
-
-interface PostData {
-  _id: string;
-  title?: string;
-  content?: string;
-  category?: string;
-  createdAt: Date;
-  votes?: Record<string, number>;
-}
+import { Types } from 'mongoose';
 
 interface Props {
   params: Promise<{ userId: string }>;
+}
+
+interface PostData {
+  _id: Types.ObjectId;
+  title: string;
+  content: string;
+  category: string;
+  createdAt: Date;
+  votes?: Record<string, number>;
+  authorId?: {
+    _id: Types.ObjectId;
+    name?: string;
+    email: string;
+  };
 }
 
 async function getPublicProfile(userId: string) {
@@ -49,8 +55,8 @@ async function getPublicProfile(userId: string) {
     if ((user.level || 1) >= 5) achievements.push('Expert');
 
     // Get recent posts if profile is public
-    let recentPosts: any[] = [];
-    let likedPosts: any[] = [];
+    let recentPosts: unknown[] = [];
+    let likedPosts: unknown[] = [];
     if (user.profileVisibility === 'public') {
       recentPosts = await Post.find({ authorId: userId })
         .sort({ createdAt: -1 })
@@ -69,7 +75,7 @@ async function getPublicProfile(userId: string) {
 
     return {
       user: {
-        _id: (user._id as any).toString(),
+        _id: (user._id as unknown as { toString: () => string }).toString(),
         email: user.email,
         name: user.name,
         role: user.role,
@@ -97,23 +103,23 @@ async function getPublicProfile(userId: string) {
         }
       },
       recentPosts: recentPosts.map(post => ({
-        _id: (post._id as any).toString(),
-        title: post.title,
-        content: post.content,
-        category: post.category,
-        createdAt: (post.createdAt as any).toISOString(),
-        likes: post.votes || {}
+        _id: ((post as PostData)._id as unknown as string).toString(),
+        title: (post as PostData).title,
+        content: (post as PostData).content,
+        category: (post as PostData).category,
+        createdAt: ((post as PostData).createdAt as unknown as Date).toISOString(),
+        likes: Object.fromEntries(Object.entries((post as PostData).votes || {}).map(([k, v]) => [k, Boolean(v)]))
       })),
       likedPosts: likedPosts.map(post => ({
-        _id: (post._id as any).toString(),
-        title: post.title,
-        content: post.content,
-        category: post.category,
-        createdAt: (post.createdAt as any).toISOString(),
-        likes: post.votes || {},
-        authorName: (post.authorId as any)?.name,
-        authorEmail: (post.authorId as any)?.email,
-        authorId: (post.authorId as any)?._id ? ((post.authorId as any)._id as any).toString() : null
+        _id: ((post as PostData)._id as unknown as string).toString(),
+        title: (post as PostData).title,
+        content: (post as PostData).content,
+        category: (post as PostData).category,
+        createdAt: ((post as PostData).createdAt as unknown as Date).toISOString(),
+        likes: Object.fromEntries(Object.entries((post as PostData).votes || {}).map(([k, v]) => [k, Boolean(v)])),
+        authorName: ((post as PostData).authorId as unknown as { name?: string })?.name,
+        authorEmail: ((post as PostData).authorId as unknown as { email: string })?.email,
+        authorId: ((post as PostData).authorId as unknown as { _id: string })?._id ? (((post as PostData).authorId as unknown as { _id: { toString: () => string } })._id as unknown as { toString: () => string }).toString() : undefined
       })),
       isPrivate: false
     };

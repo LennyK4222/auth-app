@@ -46,7 +46,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       votes[user.sub] = -1;
     }
   }
-  (post as any).votes = votes;
+  (post as { votes: Record<string, number> }).votes = votes;
   await post.save();
   return NextResponse.json({ score: post.score });
 }

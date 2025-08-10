@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { 
   Camera, 
   Edit3, 
@@ -96,10 +97,12 @@ export function ProfileHeader({}: ProfileHeaderProps) {
       {/* Cover Image */}
       <div className="relative h-32 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500">
         {profile.coverImage && (
-          <img 
+          <Image 
             src={profile.coverImage} 
             alt="Cover" 
             className="w-full h-full object-cover"
+            fill
+            sizes="100vw"
           />
         )}
         <motion.button
@@ -126,10 +129,12 @@ export function ProfileHeader({}: ProfileHeaderProps) {
           <div className="relative -mt-16">
             <div className="relative w-24 h-24 rounded-2xl border-4 border-white dark:border-slate-800 bg-gradient-to-br from-blue-500 to-purple-600 overflow-hidden shadow-xl">
               {profile.avatar ? (
-                <img 
+                <Image 
                   src={profile.avatar} 
                   alt={profile.name || 'Avatar'} 
                   className="w-full h-full object-cover"
+                  width={96}
+                  height={96}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-white font-bold text-2xl">

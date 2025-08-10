@@ -1,5 +1,6 @@
 "use client";
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { 
   MapPin, 
   Building, 
@@ -91,10 +92,11 @@ export function PublicProfileView({ profile, recentPosts, likedPosts = [] }: Pub
           {/* Cover Image */}
           <div className="relative h-32 sm:h-48 -m-6 mb-4 rounded-t-2xl overflow-hidden">
             {profile.coverImage ? (
-              <img 
+              <Image 
                 src={profile.coverImage} 
                 alt="Cover" 
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500"></div>
@@ -106,10 +108,12 @@ export function PublicProfileView({ profile, recentPosts, likedPosts = [] }: Pub
             <div className="relative -mt-12 sm:-mt-16">
               <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
                 {profile.avatar ? (
-                  <img 
+                  <Image 
                     src={profile.avatar} 
                     alt={profile.name || 'Avatar'} 
-                    className="w-full h-full object-cover"
+                    width={128}
+                    height={128}
+                    className="object-cover"
                   />
                 ) : (
                   <span className="text-2xl sm:text-3xl font-bold text-white">
