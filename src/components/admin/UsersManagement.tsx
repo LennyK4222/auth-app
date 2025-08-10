@@ -272,9 +272,15 @@ export function UsersManagement() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Active Users</p>
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Online Users</p>
               <p className="text-2xl font-bold text-green-600">
-                {users.filter(u => u.isActive).length}
+                {users.filter(u => {
+                  if (!u.lastSeenAt) return false;
+                  const lastSeen = new Date(u.lastSeenAt);
+                  const now = new Date();
+                  const diffMinutes = (now.getTime() - lastSeen.getTime()) / (1000 * 60);
+                  return diffMinutes <= 15; // Online if seen in last 15 minutes
+                }).length}
               </p>
             </div>
             <Activity className="w-8 h-8 text-green-500" />
@@ -327,12 +333,12 @@ export function UsersManagement() {
           className="rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 p-4 backdrop-blur-sm"
         >
           <div className="text-center">
-            <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Verified</p>
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Active Accounts</p>
             <p className="text-xl font-bold text-emerald-600">
-              {users.filter(u => u.isVerified).length}
+              {users.filter(u => u.isActive).length}
             </p>
             <p className="text-xs text-slate-500">
-              {users.length > 0 ? Math.round((users.filter(u => u.isVerified).length / users.length) * 100) : 0}%
+              {users.length > 0 ? Math.round((users.filter(u => u.isActive).length / users.length) * 100) : 0}% enabled
             </p>
           </div>
         </motion.div>
@@ -344,8 +350,25 @@ export function UsersManagement() {
           className="rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 p-4 backdrop-blur-sm"
         >
           <div className="text-center">
-            <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Moderators</p>
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Verified</p>
             <p className="text-xl font-bold text-blue-600">
+              {users.filter(u => u.isVerified).length}
+            </p>
+            <p className="text-xs text-slate-500">
+              {users.length > 0 ? Math.round((users.filter(u => u.isVerified).length / users.length) * 100) : 0}% verified
+            </p>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 p-4 backdrop-blur-sm"
+        >
+          <div className="text-center">
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Moderators</p>
+            <p className="text-xl font-bold text-purple-600">
               {users.filter(u => u.role === 'moderator').length}
             </p>
             <p className="text-xs text-slate-500">Staff</p>
@@ -355,7 +378,7 @@ export function UsersManagement() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
+          transition={{ delay: 0.7 }}
           className="rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 p-4 backdrop-blur-sm"
         >
           <div className="text-center">
@@ -373,7 +396,7 @@ export function UsersManagement() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
+          transition={{ delay: 0.8 }}
           className="rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 p-4 backdrop-blur-sm"
         >
           <div className="text-center">
@@ -388,7 +411,7 @@ export function UsersManagement() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
+          transition={{ delay: 0.9 }}
           className="rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 p-4 backdrop-blur-sm"
         >
           <div className="text-center">
