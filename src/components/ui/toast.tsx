@@ -54,14 +54,14 @@ export function Toast({ id, title, description, variant = "default", onClose }: 
 export function useToast() {
   const [toasts, setToasts] = React.useState<ToastProps[]>([]);
 
-  const toast = React.useCallback((props: Omit<ToastProps, "id" | "onClose">) => {
-    const id = Math.random().toString(36).substr(2, 9);
-    setToasts(prev => [...prev, { ...props, id, onClose: removeToast }]);
-  }, []);
-
   const removeToast = React.useCallback((id: string) => {
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
+
+  const toast = React.useCallback((props: Omit<ToastProps, "id" | "onClose">) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    setToasts(prev => [...prev, { ...props, id, onClose: removeToast }]);
+  }, [removeToast]);
 
   const ToastContainer = React.useMemo(() => {
     return () => (
