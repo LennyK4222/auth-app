@@ -20,11 +20,11 @@ export async function PATCH(
     }
 
     const decoded = await verifyAuthToken(token);
-    if (!decoded || !decoded.userId) {
+    if (!decoded || !decoded.sub) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    const adminUser = await User.findById(decoded.userId);
+    const adminUser = await User.findById(decoded.sub);
     if (!adminUser || adminUser.role !== 'admin') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
@@ -32,7 +32,7 @@ export async function PATCH(
     const { userId } = params;
 
     // Nu permite dezactivarea propriului cont
-    if (userId === decoded.userId) {
+    if (userId === decoded.sub) {
       return NextResponse.json(
         { error: 'Cannot change your own account status' },
         { status: 400 }

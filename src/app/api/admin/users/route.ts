@@ -24,13 +24,14 @@ export async function GET() {
 
     const decoded = await verifyAuthToken(token);
     console.log('🔓 Token decoded:', decoded ? 'success' : 'failed');
+    console.log('🔑 Token payload:', { sub: decoded?.sub, email: decoded?.email });
     
-    if (!decoded || !decoded.userId) {
-      console.log('❌ Invalid token or missing userId');
+    if (!decoded || !decoded.sub) {
+      console.log('❌ Invalid token or missing sub (userId)');
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    const adminUser = await User.findById(decoded.userId);
+    const adminUser = await User.findById(decoded.sub);
     console.log('👤 User found:', {
       id: adminUser?._id,
       email: adminUser?.email,

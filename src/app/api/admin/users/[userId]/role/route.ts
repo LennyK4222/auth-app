@@ -20,11 +20,11 @@ export async function PATCH(
     }
 
     const decoded = await verifyAuthToken(token);
-    if (!decoded || !decoded.userId) {
+    if (!decoded || !decoded.sub) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    const adminUser = await User.findById(decoded.userId);
+    const adminUser = await User.findById(decoded.sub);
     if (!adminUser || adminUser.role !== 'admin') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
@@ -38,7 +38,7 @@ export async function PATCH(
     }
 
     // Nu permite schimbarea propriului rol în non-admin
-    if (userId === decoded.userId && role !== 'admin') {
+    if (userId === decoded.sub && role !== 'admin') {
       return NextResponse.json(
         { error: 'Cannot change your own admin role' },
         { status: 400 }

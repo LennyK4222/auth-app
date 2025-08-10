@@ -19,11 +19,11 @@ export async function PATCH(request: Request) {
     }
 
     const decoded = await verifyAuthToken(token);
-    if (!decoded || !decoded.userId) {
+    if (!decoded || !decoded.sub) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    const adminUser = await User.findById(decoded.userId);
+    const adminUser = await User.findById(decoded.sub);
     if (!adminUser || adminUser.role !== 'admin') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
@@ -35,7 +35,7 @@ export async function PATCH(request: Request) {
     }
 
     // Nu permite acțiuni pe propriul cont
-    if (userIds.includes(decoded.userId)) {
+    if (userIds.includes(decoded.sub)) {
       return NextResponse.json(
         { error: 'Cannot perform bulk actions on your own account' },
         { status: 400 }
