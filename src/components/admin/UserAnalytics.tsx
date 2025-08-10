@@ -43,7 +43,7 @@ export default function UserAnalytics() {
   const fetchUserStats = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/user-analytics');
+      const response = await fetch('/api/admin/analytics');
       if (!response.ok) {
         throw new Error('Failed to fetch user analytics');
       }
