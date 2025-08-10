@@ -64,9 +64,9 @@ export default function CommentsSection({
         }
       } catch {}
     };
-    es.addEventListener("message", onMsg as any);
+    es.addEventListener("message", onMsg);
     return () => {
-      es.removeEventListener("message", onMsg as any);
+      es.removeEventListener("message", onMsg);
       es.close();
     };
   }, [postId]);

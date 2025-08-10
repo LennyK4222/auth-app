@@ -11,7 +11,7 @@ export function Heartbeat({ intervalMs = 10000 }: { intervalMs?: number }) {
   useEffect(() => {
     if (isLoading || !csrfToken) return; // Wait for CSRF token to be available
     
-    let timer: any;
+    let timer: NodeJS.Timeout;
     const tick = async () => {
       try {
         const res = await fetch('/api/user/heartbeat', {

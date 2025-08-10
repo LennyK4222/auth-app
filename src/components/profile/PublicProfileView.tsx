@@ -50,7 +50,7 @@ interface Post {
   content: string;
   category: string;
   createdAt: string;
-  likes: Record<string, any>;
+  likes: Record<string, boolean>;
   authorName?: string;
   authorEmail?: string;
   authorId?: string;

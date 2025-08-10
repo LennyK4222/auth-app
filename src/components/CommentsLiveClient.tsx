@@ -20,11 +20,11 @@ export default function CommentsLiveClient({ postId }: { postId: string }) {
         }
       } catch {}
     };
-    es.addEventListener('message', onMsg as any);
+    es.addEventListener('message', onMsg);
     return () => {
-      es.removeEventListener('message', onMsg as any);
+      es.removeEventListener('message', onMsg);
       es.close();
     };
-  }, [postId]);
+  }, [postId, router]);
   return null;
 }

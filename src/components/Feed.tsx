@@ -6,6 +6,23 @@ import { MessageSquare, TrendingUp, Clock, User, Trash2 } from 'lucide-react';
 import { useCsrfToken } from '@/hooks/useCsrfToken';
 import LikeButton from './LikeButton';
 
+interface FeedPost {
+  id: string;
+  _id: string;
+  authorId: string;
+  authorEmail: string;
+  authorName?: string;
+  title: string;
+  body: string;
+  score: number;
+  votes: Record<string, 1 | -1>;
+  commentsCount: number;
+  createdAt: string;
+  updatedAt: string;
+  likedByMe?: boolean;
+  canDelete?: boolean;
+}
+
 function timeAgo(iso?: string | null) {
   if (!iso) return '';
   const diff = Date.now() - new Date(iso).getTime();
@@ -19,7 +36,7 @@ function timeAgo(iso?: string | null) {
 }
 
 export default function Feed() {
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sort, setSort] = useState<'hot'|'new'>('hot');
@@ -34,11 +51,12 @@ export default function Feed() {
       const res = await fetch(`/api/posts?sort=${sort}`);
       const data = await res.json();
       setItems(data.items || []);
-    } catch (e: any) {
-      setError(e?.message || 'Eroare la încărcarea postărilor');
+    } catch (e: unknown) {
+      const error = e as Error;
+      setError(error?.message || 'Eroare la încărcarea postărilor');
       toast({
         title: "Eroare",
-        description: e?.message || 'Nu pot încărca postările',
+        description: error?.message || 'Nu pot încărca postările',
         variant: "destructive"
       });
     } finally {
@@ -76,10 +94,11 @@ export default function Feed() {
         title: "Success",
         description: "Postarea a fost ștearsă cu succes"
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const error = e as Error;
       toast({
         title: "Eroare",
-        description: e?.message || 'Nu s-a putut șterge postarea',
+        description: error?.message || 'Nu s-a putut șterge postarea',
         variant: "destructive"
       });
     } finally {
@@ -189,7 +208,7 @@ export default function Feed() {
                 className="group rounded-xl border border-slate-200/60 bg-white/80 backdrop-blur hover:bg-white/90 hover:shadow-lg transition-all duration-200 dark:border-slate-700/60 dark:bg-slate-900/80 dark:hover:bg-slate-900/90"
               >
                 <div className="p-4 flex gap-4">
-                  <LikeButton postId={p.id} initialLikes={p.score} initialLiked={p.likedByMe} />
+                  <LikeButton postId={p.id} initialLikes={p.score} initialLiked={p.likedByMe || false} />
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-3 mb-2">

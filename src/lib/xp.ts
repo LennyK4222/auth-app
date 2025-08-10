@@ -5,7 +5,7 @@ export interface XPEvent {
   userId: string;
   type: 'post_created' | 'comment_created' | 'like_received' | 'comment_liked' | 'daily_login';
   amount: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // Configurația XP pentru fiecare activitate

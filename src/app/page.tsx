@@ -34,7 +34,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 // Icon mapping pentru categorii
-const iconMap: Record<string, any> = {
+const iconMap: Record<string, React.ComponentType> = {
   'Code': Code,
   'Camera': Camera,
   'Music': Music,
