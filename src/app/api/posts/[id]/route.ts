@@ -91,11 +91,28 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return NextResponse.json({ error: 'Not authorized to delete this post' }, { status: 403 });
     }
 
+    // Store category for updating count later
+    const postCategory = post.category;
+
     // Delete all comments for this post
     await Comment.deleteMany({ postId: id });
 
     // Delete the post
     await Post.findByIdAndDelete(id);
+
+    // Update category post count if post had a category
+    if (postCategory) {
+      try {
+        const { Category } = await import('@/models/Category');
+        await Category.findOneAndUpdate(
+          { slug: postCategory },
+          { $inc: { postCount: -1 } }
+        );
+      } catch (categoryError) {
+        console.error('Failed to update category post count after deletion:', categoryError);
+        // Continue even if category update fails
+      }
+    }
 
     return NextResponse.json({ message: 'Post deleted successfully' });
   } catch (error) {

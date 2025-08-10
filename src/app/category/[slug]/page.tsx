@@ -238,7 +238,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
               <CreateThreadModal categorySlug={category.slug} categoryName={category.name} />
             </div>
           ) : (
-            posts.map(post => (
+            posts.map((post: any) => (
               <div key={post._id} className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm hover:shadow-md transition">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
