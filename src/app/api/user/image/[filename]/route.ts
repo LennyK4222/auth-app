@@ -7,7 +7,7 @@ import { connectToDatabase } from '@/lib/db';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { filename: string } }
+  { params }: { params: Promise<{ filename: string }> }
 ) {
   try {
     // Await params to comply with Next.js 15
