@@ -145,30 +145,72 @@ export async function GET() {
       lastActive: user.lastSeenAt
     }));
 
-    // Creșterea utilizatorilor în ultimele 7 zile
+    // Creșterea utilizatorilor în ultimele 7 zile - optimizat cu agregare
+    const userGrowthData = await User.aggregate([
+      {
+        $facet: {
+          // Utilizatori noi în ultimele 7 zile
+          newUsers: [
+            {
+              $match: {
+                createdAt: { $gte: weekAgo }
+              }
+            },
+            {
+              $group: {
+                _id: {
+                  $dateToString: {
+                    format: "%Y-%m-%d",
+                    date: "$createdAt",
+                    timezone: "UTC"
+                  }
+                },
+                count: { $sum: 1 }
+              }
+            }
+          ],
+          // Utilizatori activi în ultimele 7 zile
+          activeUsers: [
+            {
+              $match: {
+                lastSeenAt: { $gte: weekAgo }
+              }
+            },
+            {
+              $group: {
+                _id: {
+                  $dateToString: {
+                    format: "%Y-%m-%d", 
+                    date: "$lastSeenAt",
+                    timezone: "UTC"
+                  }
+                },
+                count: { $sum: 1 }
+              }
+            }
+          ]
+        }
+      }
+    ]);
+
+    // Construiește array-ul pentru ultimele 7 zile
     const userGrowth = [];
     for (let i = 6; i >= 0; i--) {
       const date = new Date(today.getTime() - i * 24 * 60 * 60 * 1000);
-      const nextDate = new Date(date.getTime() + 24 * 60 * 60 * 1000);
-
-      const newUsers = await User.countDocuments({
-        createdAt: {
-          $gte: date,
-          $lt: nextDate
-        }
-      });
-
-      const activeUsers = await User.countDocuments({
-        lastSeenAt: {
-          $gte: date,
-          $lt: nextDate
-        }
-      });
+      const dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+      
+      const newUsersForDay = userGrowthData[0].newUsers.find((item: any) => item._id === dateString)?.count || 0;
+      const activeUsersForDay = userGrowthData[0].activeUsers.find((item: any) => item._id === dateString)?.count || 0;
 
       userGrowth.push({
         date: date.toISOString(),
-        newUsers,
-        activeUsers
+        dateLabel: date.toLocaleDateString('ro-RO', { 
+          weekday: 'short', 
+          month: 'short', 
+          day: 'numeric' 
+        }),
+        newUsers: newUsersForDay,
+        activeUsers: activeUsersForDay
       });
     }
 
