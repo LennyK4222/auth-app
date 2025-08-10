@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 // Import components explicitly
-import { UsersManagement } from '@/components/admin/UsersManagement';
+import UsersManagement from '@/components/admin/UsersManagement';
 import { CategoriesManagement } from '@/components/admin/CategoriesManagement';
 import { PostsManagement } from '@/components/admin/PostsManagement';
 import { SystemSettings } from '@/components/admin/SystemSettings';

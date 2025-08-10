@@ -603,3 +603,5 @@ export function UsersManagement() {
     </div>
   );
 }
+
+export default UsersManagement;
