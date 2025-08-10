@@ -6,18 +6,21 @@ export function useUserActivity() {
   useEffect(() => {
     const updateLastSeen = async () => {
       try {
-        const token = localStorage.getItem('authToken');
-        if (!token) return;
+        // Get CSRF token first
+        const csrfResponse = await fetch('/api/csrf');
+        const { token: csrfToken } = await csrfResponse.json();
 
         await fetch('/api/user/heartbeat', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken
+          },
+          credentials: 'include' // Include cookies
         });
       } catch (error) {
-        console.error('Failed to update last seen:', error);
+        // Ignore errors silently - heartbeat is non-critical
+        console.debug('Heartbeat failed:', error);
       }
     };
 

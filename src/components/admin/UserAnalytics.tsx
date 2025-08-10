@@ -35,6 +35,7 @@ export default function UserAnalytics() {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   useEffect(() => {
     fetchUserStats();
@@ -43,12 +44,16 @@ export default function UserAnalytics() {
   const fetchUserStats = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/analytics');
+      setError(null);
+      const response = await fetch('/api/admin/analytics', {
+        credentials: 'include' // Include cookies for authentication
+      });
       if (!response.ok) {
-        throw new Error('Failed to fetch user analytics');
+        throw new Error(`Failed to fetch analytics: ${response.status}`);
       }
       const data = await response.json();
       setStats(data);
+      setLastUpdated(new Date());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
@@ -59,7 +64,10 @@ export default function UserAnalytics() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading analytics...</p>
+        </div>
       </div>
     );
   }
@@ -82,6 +90,31 @@ export default function UserAnalytics() {
 
   return (
     <div className="space-y-6">
+      {/* Header with refresh button */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">User Analytics</h2>
+          <div className="flex items-center space-x-2 text-sm text-gray-500">
+            <p>Comprehensive user statistics and insights</p>
+            {lastUpdated && (
+              <>
+                <span>•</span>
+                <p>Last updated: {lastUpdated.toLocaleTimeString()}</p>
+              </>
+            )}
+          </div>
+        </div>
+        <button
+          onClick={fetchUserStats}
+          disabled={loading}
+          className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <svg className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          {loading ? 'Refreshing...' : 'Refresh'}
+        </button>
+      </div>
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <motion.div
