@@ -27,6 +27,13 @@ export default function PromoteToAdmin() {
       
       if (response.ok) {
         setMessage(`✅ Success: ${data.message}`);
+        setMessage('✅ Promoted! Redirecting to login to refresh session...');
+        
+        // Logout and redirect to login to get new token
+        setTimeout(async () => {
+          await fetch('/api/auth/logout', { method: 'POST' });
+          window.location.href = '/login';
+        }, 2000);
       } else {
         setMessage(`❌ Error: ${data.error}`);
       }

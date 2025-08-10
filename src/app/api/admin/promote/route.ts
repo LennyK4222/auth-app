@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
 import { User } from '@/models/User';
+import { signAuthToken } from '@/lib/auth/jwt';
+import { cookies } from 'next/headers';
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,7 +25,11 @@ export async function POST(req: NextRequest) {
     await connectToDatabase();
 
     // Check if user exists
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }) as {
+      _id: { toString: () => string },
+      email: string,
+      name: string
+    } | null;
     if (!user) {
       return NextResponse.json(
         { error: 'User not found' },
@@ -37,7 +43,17 @@ export async function POST(req: NextRequest) {
       { $set: { role: 'admin' } }
     );
 
-    return NextResponse.json({ 
+    // Generate new token with admin role
+    const newToken = await signAuthToken({
+      sub: user._id.toString(),
+      email: user.email,
+      name: user.name,
+      role: 'admin'
+    });
+
+    // Set the new token as cookie
+    const cookieStore = await cookies();
+    const response = NextResponse.json({ 
       message: `User ${email} has been promoted to admin`,
       user: {
         email: user.email,
@@ -45,6 +61,15 @@ export async function POST(req: NextRequest) {
         role: 'admin'
       }
     });
+
+    response.cookies.set('token', newToken, {
+      httpOnly: true,
+      secure: (process.env.NODE_ENV as string) === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7 // 7 days
+    });
+
+    return response;
   } catch (error) {
     console.error('Error promoting user to admin:', error);
     return NextResponse.json(
