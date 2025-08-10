@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
+import { toast } from 'react-hot-toast';
 
 export interface UserProfile {
   _id: string;

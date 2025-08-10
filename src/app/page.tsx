@@ -94,8 +94,6 @@ export default async function RootPage() {
     token = match ? decodeURIComponent(match[1]) : undefined;
   }
   if (!token) {
-    const all = cookieStore.getAll().map(c => c.name);
-    console.log('PAGE DEBUG: No token found on /, cookies:', all, 'cookie header length:', (await headers()).get('cookie')?.length || 0);
     redirect('/login');
   }
 

@@ -56,12 +56,6 @@ export async function awardXP(event: XPEvent): Promise<{
       level: newLevel
     });
 
-    console.log(`XP awarded: ${event.amount} to user ${event.userId} for ${event.type}`);
-    
-    if (levelUp) {
-      console.log(`🎉 Level up! User ${event.userId} reached level ${newLevel}`);
-    }
-
     return {
       levelUp,
       newLevel,
