@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 }
 
 // Pentru debugging în development
-export async function GET(_req: NextRequest) {
+export async function GET() {
   if (process.env.NODE_ENV !== 'development') {
     return NextResponse.json({ error: 'Not available in production' }, { status: 404 });
   }

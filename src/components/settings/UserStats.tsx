@@ -13,11 +13,8 @@ import {
 } from 'lucide-react';
 import { useProfile } from '@/hooks/useProfile';
 
-interface UserStatsProps {
-  userId: string;
-}
 
-export function UserStats({ userId }: UserStatsProps) {
+export function UserStats() {
   const { profile, loading } = useProfile();
 
   if (loading || !profile) {

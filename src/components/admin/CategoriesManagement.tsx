@@ -7,8 +7,7 @@ import {
   Trash2,
   Tag,
   Save,
-  X,
-  Palette
+  X
 } from 'lucide-react';
 import { useCsrfToken } from '@/hooks/useCsrfToken';
 

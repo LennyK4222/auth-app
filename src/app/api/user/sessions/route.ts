@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { verifyAuthToken, type JWTPayload } from '@/lib/auth/jwt';
 import { getUserActiveSessions } from '@/lib/sessions';
 
-export async function GET(_req: NextRequest) {
+export async function GET() {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;

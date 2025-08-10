@@ -8,7 +8,6 @@ import {
   Globe, 
   Save,
   X,
-  Check,
   AlertCircle
 } from 'lucide-react';
 
