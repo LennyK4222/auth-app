@@ -26,9 +26,9 @@ import {
 
 interface User {
   _id: string;
-  username: string;
+  username?: string;
   email: string;
-  name: string;
+  name?: string;
   role: 'user' | 'admin' | 'moderator';
   isActive: boolean;
   createdAt: string;
@@ -82,9 +82,13 @@ export function UsersManagement() {
 
   // Filter and search users
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const username = user.username || '';
+    const email = user.email || '';
+    const name = user.name || '';
+    
+    const matchesSearch = username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         name.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesRole = filterRole === 'all' || user.role === filterRole;
     const matchesStatus = filterStatus === 'all' || 
@@ -540,14 +544,14 @@ export function UsersManagement() {
                           <Image
                             className="h-10 w-10 rounded-full object-cover"
                             src={user.avatar}
-                            alt={user.username}
+                            alt={user.name || user.username || user.email}
                             width={40}
                             height={40}
                           />
                         ) : (
                           <div className="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
                             <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                              {user.username.charAt(0).toUpperCase()}
+                              {(user.name || user.username || user.email).charAt(0).toUpperCase()}
                             </span>
                           </div>
                         )}
@@ -555,7 +559,7 @@ export function UsersManagement() {
                       <div className="ml-4">
                         <div className="flex items-center">
                           <div className="text-sm font-medium text-slate-900 dark:text-white">
-                            {user.username}
+                            {user.name || user.username || user.email}
                           </div>
                           {user.isVerified && (
                             <ShieldCheck className="w-4 h-4 ml-1 text-green-500" />
