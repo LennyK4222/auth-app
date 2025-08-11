@@ -48,7 +48,7 @@ export default function Heartbeat() {
       clearTimeout(initialTimeout);
       clearInterval(interval);
     };
-  }, [csrfToken, isLoading]);
+  }, [csrfToken, isLoading, router]);
 
   return null;
 }

@@ -165,7 +165,7 @@ export async function updateSessionActivityDetailed(
     try { loc = await getLocationFromIP(ip); } catch { /* noop */ }
   }
 
-  const update: any = {
+  const update: Record<string, unknown> = {
     lastActivity: new Date(),
     'deviceInfo.userAgent': userAgent,
     'deviceInfo.ip': ip,

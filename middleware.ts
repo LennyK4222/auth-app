@@ -21,6 +21,10 @@ function hexRandom64() {
 }
 
 export function middleware(request: NextRequest) {
+  // Generate a per-request nonce for CSP and pass it to the app via request header
+  const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString('base64');
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-nonce', nonce);
   // Check both 'session' and 'token' cookies for compatibility
   let token = getCookie(request, 'session');
   if (!token) {
@@ -39,11 +43,13 @@ export function middleware(request: NextRequest) {
     const url = new URL('/', request.url);
     const res = NextResponse.redirect(url);
     // Attach security headers on redirect too
-    addSecurityHeaders(res);
+  addSecurityHeaders(res, nonce);
     return res;
   }
 
-  const res = NextResponse.next();
+  const res = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
 
   // Issue CSRF token cookie (double-submit) if missing
   let csrf = getCookie(request, 'csrf');
@@ -61,15 +67,17 @@ export function middleware(request: NextRequest) {
   }
 
   // Add robust security headers to every response
-  addSecurityHeaders(res);
+  addSecurityHeaders(res, nonce);
 
   return res;
 }
 
-function addSecurityHeaders(res: NextResponse) {
+function addSecurityHeaders(res: NextResponse, nonce: string) {
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/",
+    // Use a nonce for inline scripts we control; keep recaptcha sources
+    `script-src 'self' 'strict-dynamic' 'nonce-${nonce}' https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/`,
+    // Keep unsafe-inline for styles due to third-party libs and Tailwind preflight; can be hardened later with nonces/hashes
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
@@ -79,6 +87,7 @@ function addSecurityHeaders(res: NextResponse) {
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
+    'upgrade-insecure-requests',
   ].join('; ');
   res.headers.set('Content-Security-Policy', csp);
   res.headers.set('X-Frame-Options', 'DENY');

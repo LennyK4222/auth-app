@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
-import Link from "next/link";
 import { AppProvider } from "@/hooks/useApp";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CsrfProvider } from "@/contexts/CsrfContext";
 import "./globals.css";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { verifyAuthToken } from "@/lib/auth/jwt";
 import { connectToDatabase } from "@/lib/db";
 import { User } from "@/models/User";
@@ -31,6 +30,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const cookieStore = await cookies();
+  const hdrs = await headers();
+  const cspNonce = hdrs.get('x-nonce') || undefined;
   const token = cookieStore.get("token")?.value;
   let isAuthed = false;
   let userInfo: { name?: string; email: string; role?: string } | null = null;
@@ -54,6 +55,7 @@ export default async function RootLayout({
       <body className={`min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 text-foreground ${geistSans.variable}`}>
         {/* Theme script to avoid flash */}
         <script
+          nonce={cspNonce}
           dangerouslySetInnerHTML={{
             __html: `
             try {

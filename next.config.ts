@@ -28,6 +28,7 @@ const nextConfig: NextConfig = {
       headers: [
         { key: 'X-DNS-Prefetch-Control', value: 'on' },
         { key: 'X-Frame-Options', value: 'DENY' },
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
       ],
     },
     // Cache Next static assets aggressively
@@ -35,6 +36,7 @@ const nextConfig: NextConfig = {
       source: '/_next/static/:path*',
       headers: [
         { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
       ],
     },
     // Cache public assets like svg, ico, images
@@ -42,6 +44,7 @@ const nextConfig: NextConfig = {
       source: '/:all*(svg|jpg|jpeg|png|gif|webp|ico|css|js|woff|woff2)',
       headers: [
         { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
       ],
     },
   ],

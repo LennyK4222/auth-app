@@ -173,8 +173,10 @@ export function SecuritySettings({}: SecuritySettingsProps) {
       }
 
       if (!response.ok) {
-        const errBody = await response.json().catch(() => ({} as any));
-        const msg = errBody?.error || 'Failed to terminate session';
+        const errBody: unknown = await response.json().catch(() => ({}));
+        const msg = (errBody && typeof errBody === 'object' && 'error' in errBody)
+          ? String((errBody as { error?: unknown }).error ?? 'Failed to terminate session')
+          : 'Failed to terminate session';
         throw new Error(msg);
       }
 
