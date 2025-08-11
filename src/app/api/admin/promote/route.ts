@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
 import { User } from '@/models/User';
 import { signAuthToken } from '@/lib/auth/jwt';
-import { cookies } from 'next/headers';
 
 export async function POST(req: NextRequest) {
   try {
@@ -51,8 +50,7 @@ export async function POST(req: NextRequest) {
       role: 'admin'
     });
 
-    // Set the new token as cookie
-    const cookieStore = await cookies();
+  // Set the new token as cookie
     const response = NextResponse.json({ 
       message: `User ${email} has been promoted to admin`,
       user: {

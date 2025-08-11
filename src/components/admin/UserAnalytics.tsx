@@ -251,7 +251,7 @@ export default function UserAnalytics() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-              {stats.topUsers.map((user, index) => (
+              {stats.topUsers.map((user) => (
                 <tr key={user._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors duration-200">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">

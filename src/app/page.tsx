@@ -3,7 +3,8 @@ import { redirect } from 'next/navigation';
 import { verifyAuthToken } from '@/lib/auth/jwt';
 import Link from 'next/link';
 import { RecentUsersWidget } from '@/components/RecentUsersWidget';
-import { Heartbeat } from '@/components/Heartbeat';
+import Heartbeat from '@/components/Heartbeat';
+import { AuroraBackground } from '@/components/AuroraBackground';
 import Feed from '../components/Feed';
 import { ClientCategories } from '@/components/ClientCategories';
 import { connectToDatabase } from '@/lib/db';
@@ -100,6 +101,7 @@ export default async function RootPage() {
 
           {/* Hero Section */}
           <section className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white/95 backdrop-blur-sm p-8 shadow-lg dark:border-slate-800/80 dark:bg-slate-900/95">
+            <AuroraBackground />
             <div className="relative">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
@@ -113,6 +115,18 @@ export default async function RootPage() {
                     Conectează-te, împărtășește și explorează împreună cu alții
                   </p>
                 </div>
+              </div>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-wrap items-center gap-3 mt-2">
+                <a href="#feed-composer" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition">
+                  <MessageSquare className="w-4 h-4" />
+                  Creează postare
+                </a>
+                <a href="#categories" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 dark:hover:bg-slate-700 transition">
+                  <TrendingUp className="w-4 h-4 text-indigo-600" />
+                  Explorează categorii
+                </a>
               </div>
             
             {/* Quick Stats */}
@@ -150,7 +164,7 @@ export default async function RootPage() {
         </section>
 
         {/* Categories Section */}
-        <section className="mt-8">
+  <section id="categories" className="mt-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Categorii populare</h2>
             <Link href="/categories" className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 font-medium text-sm">
@@ -164,19 +178,11 @@ export default async function RootPage() {
         </section>
 
         {/* Main Content Grid */}
-        <section className="mt-8 grid gap-8 lg:grid-cols-3">
+    <section className="mt-8 grid gap-8 lg:grid-cols-3">
           {/* Feed */}
           <div className="lg:col-span-2">
-            <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">Feed recent</h2>
-              <div className="flex gap-2">
-                <button className="px-3 py-1.5 text-sm bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 rounded-lg font-medium">
-                  Trending
-                </button>
-                <button className="px-3 py-1.5 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
-                  Recent
-                </button>
-              </div>
             </div>
             <Feed />
           </div>

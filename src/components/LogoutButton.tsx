@@ -1,9 +1,9 @@
 "use client";
-import { useCsrfToken } from '@/hooks/useCsrfToken';
+import { useCsrfContext } from '@/contexts/CsrfContext';
 import { toast } from 'react-hot-toast';
 
 export function LogoutButton() {
-  const { csrfToken } = useCsrfToken();
+  const { csrfToken } = useCsrfContext();
 
   const handleLogout = async (e: React.FormEvent) => {
     e.preventDefault();

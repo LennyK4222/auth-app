@@ -9,7 +9,7 @@ import { Comment } from '@/models/Comment';
 // Delete user
 export async function DELETE(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     await connectToDatabase();
@@ -32,7 +32,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    const { userId } = params;
+  const { userId } = await params;
 
     // Nu permite ștergerea propriului cont
     if (userId === decoded.userId) {
@@ -71,7 +71,7 @@ export async function DELETE(
 // Get user details
 export async function GET(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     await connectToDatabase();
@@ -94,7 +94,7 @@ export async function GET(
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    const { userId } = params;
+  const { userId } = await params;
 
     // Fetch user with detailed statistics
     const userDetails = await User.aggregate([
@@ -148,7 +148,7 @@ export async function GET(
 // Update user (basic info)
 export async function PATCH(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     await connectToDatabase();
@@ -171,7 +171,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    const { userId } = params;
+  const { userId } = await params;
     const updateData = await request.json();
 
     // Remove sensitive fields from update

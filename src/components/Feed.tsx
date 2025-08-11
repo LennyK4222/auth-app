@@ -3,10 +3,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/components/ui/toast';
 import { MessageSquare, TrendingUp, Clock, Trash2, Tag } from 'lucide-react';
-import { useCsrfToken } from '@/hooks/useCsrfToken';
+import { useCsrfContext } from '@/contexts/CsrfContext';
 import { ConfirmDialog } from '@/components/ui/dialog';
 import Image from 'next/image';
 import LikeButton from './LikeButton';
+import { useApp } from '@/hooks/useApp';
 
 interface FeedPost {
   id: string;
@@ -70,6 +71,7 @@ export default function Feed() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sort, setSort] = useState<'hot'|'new'>('hot');
+  const [category, setCategory] = useState<string>('all');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; postId: string | null; postTitle: string }>({
     isOpen: false,
@@ -77,13 +79,16 @@ export default function Feed() {
     postTitle: ''
   });
   const { toast, ToastContainer } = useToast();
-  const { csrfToken } = useCsrfToken();
+  const { csrfToken } = useCsrfContext();
+  const { state } = useApp();
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/posts?sort=${sort}`);
+      const params = new URLSearchParams({ sort });
+      if (category && category !== 'all') params.set('category', category);
+      const res = await fetch(`/api/posts?${params.toString()}`);
       const data = await res.json();
       setItems(data.items || []);
     } catch (e: unknown) {
@@ -97,7 +102,7 @@ export default function Feed() {
     } finally {
       setLoading(false);
     }
-  }, [sort, toast]);
+  }, [sort, category, toast]);
 
   const deletePost = async (postId: string) => {
     if (!deleteDialog.postId || !csrfToken) return;
@@ -162,7 +167,7 @@ export default function Feed() {
       <ToastContainer />
       
       {/* Header modern */}
-      <motion.div 
+  <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="rounded-2xl border border-slate-200/60 bg-gradient-to-r from-white/80 to-slate-50/80 backdrop-blur-xl p-6 shadow-xl dark:from-slate-900/80 dark:to-slate-800/80 dark:border-slate-700/60"
@@ -206,7 +211,37 @@ export default function Feed() {
           </div>
         </div>
 
-        <Composer onPosted={load} />
+        <div id="feed-composer">
+          <Composer onPosted={load} />
+        </div>
+
+        {/* Category Filter - always visible */}
+        <div className="flex flex-wrap gap-2 mt-4">
+          <button
+            onClick={() => setCategory('all')}
+            className={`px-3 py-1.5 text-xs rounded-full border transition ${
+              category === 'all'
+                ? 'bg-indigo-600 text-white border-indigo-600'
+                : 'bg-white/70 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+            }`}
+          >
+            Toate
+          </button>
+          {(state.categories || []).map(cat => (
+            <button
+              key={cat.slug}
+              onClick={() => setCategory(cat.slug)}
+              className={`px-3 py-1.5 text-xs rounded-full border transition ${
+                category === cat.slug
+                  ? 'bg-indigo-600 text-white border-indigo-600'
+                  : 'bg-white/70 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+              }`}
+              title={cat.description || cat.name}
+            >
+              {cat.name}
+            </button>
+          ))}
+        </div>
       </motion.div>
 
       {loading ? (
@@ -240,7 +275,7 @@ export default function Feed() {
           <p className="text-lg font-medium mb-2">Încă nimic aici</p>
           <p className="text-sm">Fii primul care publică ceva!</p>
         </motion.div>
-      ) : (
+  ) : (
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -356,7 +391,7 @@ function Composer({ onPosted }: { onPosted: () => void }) {
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
   const { toast } = useToast();
-  const { csrfToken } = useCsrfToken();
+  const { csrfToken } = useCsrfContext();
   
   const submit = async () => {
     if (!title.trim() || !body.trim()) {

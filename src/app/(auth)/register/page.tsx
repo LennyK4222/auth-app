@@ -15,7 +15,7 @@ import { toast } from 'react-hot-toast';
 // removed framer-motion background in favor of AuroraBackground
 import { Eye, EyeOff } from 'lucide-react';
 import { AuroraBackground } from '@/components/AuroraBackground';
-import { useCsrfToken } from '@/hooks/useCsrfToken';
+import { useCsrfContext } from '@/contexts/CsrfContext';
 
 const RegisterSchema = z.object({
   name: z.string().optional(),
@@ -29,7 +29,7 @@ export default function RegisterPage() {
   const [mounted, setMounted] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [show, setShow] = useState(false);
-  const { csrfToken } = useCsrfToken();
+  const { csrfToken } = useCsrfContext();
 
   const {
     register,

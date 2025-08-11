@@ -15,7 +15,7 @@ import { toast } from 'react-hot-toast';
 import { Captcha } from '@/components/Captcha';
 import { Eye, EyeOff } from 'lucide-react';
 import { AuroraBackground } from '@/components/AuroraBackground';
-import { useCsrfToken } from '@/hooks/useCsrfToken';
+import { useCsrfContext } from '@/contexts/CsrfContext';
 
 const LoginSchema = z.object({
   email: z.string().email('Email invalid'),
@@ -29,7 +29,7 @@ export default function LoginPage() {
   const [mounted, setMounted] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [show, setShow] = useState(false);
-  const { csrfToken } = useCsrfToken();
+  const { csrfToken } = useCsrfContext();
 
   const {
     register,

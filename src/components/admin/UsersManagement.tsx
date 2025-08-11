@@ -6,22 +6,22 @@ import Image from 'next/image';
 import {
   Users,
   Search,
-  Filter,
+  
   UserPlus,
-  Mail,
+  
   Shield,
   ShieldCheck,
   Ban,
   Trash2,
-  Edit,
+  
   Eye,
   Calendar,
   Clock,
-  MapPin,
+  
   Activity,
   Download,
-  Upload,
-  MoreHorizontal
+  
+  
 } from 'lucide-react';
 
 interface User {
@@ -62,15 +62,9 @@ export function UsersManagement() {
       if (response.ok) {
         const data = await response.json();
         setUsers(data.users || []);
-        console.log('Fetched users:', data.users?.length || 0);
-      } else {
-        console.error('Failed to fetch users:', response.status, response.statusText);
-        if (response.status === 401) {
-          console.log('Not authorized - user may need to log out and log back in after promotion');
-        }
       }
-    } catch (error) {
-      console.error('Error fetching users:', error);
+  } catch {
+      // Silent error handling for production
     } finally {
       setLoading(false);
     }
@@ -135,8 +129,8 @@ export function UsersManagement() {
       if (response.ok) {
         fetchUsers();
       }
-    } catch (error) {
-      console.error('Error updating user role:', error);
+  } catch {
+      // Silent error handling
     }
   };
 
@@ -151,8 +145,8 @@ export function UsersManagement() {
       if (response.ok) {
         fetchUsers();
       }
-    } catch (error) {
-      console.error('Error updating user status:', error);
+  } catch {
+      // Silent error handling
     }
   };
 
@@ -171,8 +165,8 @@ export function UsersManagement() {
       if (response.ok) {
         fetchUsers();
       }
-    } catch (error) {
-      console.error('Error deleting user:', error);
+  } catch {
+      // Silent error handling
     }
   };
 
@@ -192,8 +186,8 @@ export function UsersManagement() {
         setSelectedUsers([]);
         fetchUsers();
       }
-    } catch (error) {
-      console.error('Error performing bulk action:', error);
+  } catch {
+      // Silent error handling
     }
   };
 
@@ -715,6 +709,90 @@ export function UsersManagement() {
           </div>
         )}
       </motion.div>
+
+      {/* User Details Modal */}
+      {showUserModal && selectedUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowUserModal(false)}
+          />
+          <div className="relative z-10 w-full max-w-md rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Detalii utilizator</h3>
+              <button
+                onClick={() => setShowUserModal(false)}
+                className="px-2 py-1 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+                aria-label="Închide"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex items-center gap-4">
+              {selectedUser.avatar ? (
+                <Image
+                  className="h-12 w-12 rounded-full object-cover"
+                  src={selectedUser.avatar}
+                  alt={selectedUser.name || selectedUser.username || selectedUser.email}
+                  width={48}
+                  height={48}
+                />
+              ) : (
+                <div className="h-12 w-12 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+                  <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                    {(selectedUser.name || selectedUser.username || selectedUser.email).charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
+              <div>
+                <div className="text-slate-900 dark:text-white font-medium">
+                  {selectedUser.name || selectedUser.username || selectedUser.email}
+                </div>
+                <div className="text-sm text-slate-500 dark:text-slate-400">{selectedUser.email}</div>
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <div className="text-slate-500 dark:text-slate-400">Rol</div>
+                <div className="font-medium">{selectedUser.role}</div>
+              </div>
+              <div>
+                <div className="text-slate-500 dark:text-slate-400">Status</div>
+                <div className="font-medium">{selectedUser.isActive ? 'Activ' : 'Inactiv'}</div>
+              </div>
+              <div>
+                <div className="text-slate-500 dark:text-slate-400">Creat</div>
+                <div className="font-medium">
+                  {new Date(selectedUser.createdAt).toLocaleDateString()}
+                </div>
+              </div>
+              <div>
+                <div className="text-slate-500 dark:text-slate-400">Ultima activitate</div>
+                <div className="font-medium">
+                  {selectedUser.lastSeenAt ? new Date(selectedUser.lastSeenAt).toLocaleDateString() : '—'}
+                </div>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                onClick={() => setShowUserModal(false)}
+                className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
+              >
+                Închide
+              </button>
+              <button
+                onClick={() => {
+                  toggleUserStatus(selectedUser._id);
+                  setShowUserModal(false);
+                }}
+                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {selectedUser.isActive ? 'Dezactivează' : 'Activează'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

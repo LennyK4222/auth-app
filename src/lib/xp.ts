@@ -18,9 +18,7 @@ export const XP_REWARDS = {
 } as const;
 
 // Calculul XP necesar pentru fiecare level
-export function calculateXPForLevel(level: number): number {
-  return level * 1000; // 1000 XP pentru level 1, 2000 pentru level 2, etc.
-}
+// Removed calculateXPForLevel as unused
 
 // Calculul level-ului pe baza XP-ului total
 export function calculateLevelFromXP(totalXP: number): number {
@@ -119,18 +117,4 @@ export async function awardXPForDailyLogin(userId: string) {
 }
 
 // Funcție pentru a obține progresul către următorul level
-export function getXPProgress(currentXP: number, currentLevel: number) {
-  const currentLevelXP = (currentLevel - 1) * 1000;
-  const nextLevelXP = currentLevel * 1000;
-  const progressXP = currentXP - currentLevelXP;
-  const neededXP = nextLevelXP - currentLevelXP;
-  const progressPercent = Math.min((progressXP / neededXP) * 100, 100);
-
-  return {
-    currentLevelXP,
-    nextLevelXP,
-    progressXP,
-    neededXP,
-    progressPercent
-  };
-}
+// Removed getXPProgress as unused in the project

@@ -9,7 +9,7 @@ import {
   Save,
   X
 } from 'lucide-react';
-import { useCsrfToken } from '@/hooks/useCsrfToken';
+import { useCsrfContext } from '@/contexts/CsrfContext';
 
 interface Category {
   _id: string;
@@ -29,7 +29,7 @@ export function CategoriesManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const { csrfToken } = useCsrfToken();
+  const { csrfToken } = useCsrfContext();
 
   // Fetch categories from API
   useEffect(() => {

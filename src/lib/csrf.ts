@@ -1,15 +1,17 @@
 import type { NextRequest } from 'next/server';
 
-// Validate CSRF via header 'x-csrf-token'
+// Validate CSRF via header and cookie comparison
 export async function validateCsrf(req: NextRequest) {
-  const header = req.headers.get('x-csrf-token');
+  const headerToken = req.headers.get('x-csrf-token') || req.headers.get('X-CSRF-Token');
+  const cookieToken = req.cookies.get('csrf')?.value;
   
-  if (!header) {
+  if (!headerToken || !cookieToken) {
     return false;
   }
   
-  // Check if it's a valid hex token of expected length (64 characters for 32 bytes)
-  const isValidFormat = /^[a-f0-9]{64}$/i.test(header);
+  // Check if tokens match and are valid format
+  const isValidFormat = /^[a-f0-9]{64}$/i.test(headerToken);
+  const tokensMatch = headerToken === cookieToken;
   
-  return isValidFormat;
+  return isValidFormat && tokensMatch;
 }

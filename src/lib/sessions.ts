@@ -32,10 +32,74 @@ export function parseUserAgent(userAgent: string): Partial<DeviceInfo> {
 }
 
 // Obține informații despre locație pe baza IP-ului (placeholder - poți integra cu un API real)
-export async function getLocationFromIP(): Promise<LocationInfo | null> {
+function normalizeIPv4Mapped(ip?: string | null): string | null {
+  if (!ip) return null;
+  const m = ip.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+  if (m) return m[1];
+  if (ip === '::1') return '127.0.0.1';
+  return ip;
+}
+
+function isPrivateIp(ip?: string | null): boolean {
+  if (!ip) return true;
+  const v4 = normalizeIPv4Mapped(ip);
+  if (!v4) return true;
+  if (v4 === 'unknown') return true;
+  if (v4.startsWith('10.')) return true;
+  if (v4.startsWith('192.168.')) return true;
+  // 172.16.0.0 – 172.31.255.255
+  if (v4.startsWith('172.')) {
+    const second = parseInt(v4.split('.')[1] || '0', 10);
+    if (second >= 16 && second <= 31) return true;
+  }
+  if (v4.startsWith('127.')) return true;
+  // Simple IPv6 private/link-local checks
+  if (ip.startsWith('fc') || ip.startsWith('fd')) return true; // unique local
+  if (ip.startsWith('fe80:')) return true; // link-local
+  return false;
+}
+
+export async function getLocationFromIP(ip: string): Promise<LocationInfo | null> {
   try {
-    // Aici poți integra cu un API precum ipapi.co, ipgeolocation.io, etc.
-    // Pentru demo, returnez null
+    const norm = normalizeIPv4Mapped(ip);
+    if (!norm || isPrivateIp(norm)) return null;
+
+    // Prefer ipinfo if token set, else use ipapi.co
+    const ipinfoToken = process.env.IPINFO_TOKEN;
+
+    if (ipinfoToken) {
+      const res = await fetch(`https://ipinfo.io/${encodeURIComponent(norm)}?token=${ipinfoToken}`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json() as { city?: string; country?: string; loc?: string };
+        let lat: number | undefined;
+        let lng: number | undefined;
+        if (data.loc && data.loc.includes(',')) {
+          const [la, lo] = data.loc.split(',');
+          lat = Number(la);
+          lng = Number(lo);
+        }
+        return {
+          city: data.city,
+          country: data.country,
+          coordinates: (lat !== undefined && lng !== undefined) ? { lat, lng } : undefined,
+        };
+      }
+    }
+
+    // Fallback to ipapi.co
+    const res = await fetch(`https://ipapi.co/${encodeURIComponent(norm)}/json/`, { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json() as { city?: string; country?: string; country_name?: string; latitude?: number; longitude?: number };
+      const country = data.country_name || data.country;
+      const lat = typeof data.latitude === 'number' ? data.latitude : undefined;
+      const lng = typeof data.longitude === 'number' ? data.longitude : undefined;
+      return {
+        city: data.city,
+        country,
+        coordinates: (lat !== undefined && lng !== undefined) ? { lat, lng } : undefined,
+      };
+    }
+
     return null;
   } catch (error) {
     console.error('Error getting location:', error);
@@ -49,7 +113,8 @@ export async function createSession(
   token: string,
   userAgent: string,
   ip: string,
-  expiresAt: Date
+  expiresAt: Date,
+  locationOverride?: LocationInfo | null
 ): Promise<ISession> {
   await connectToDatabase();
   
@@ -59,7 +124,7 @@ export async function createSession(
     ...parseUserAgent(userAgent)
   };
   
-  const location = await getLocationFromIP();
+  const location = locationOverride ?? await getLocationFromIP(ip);
   
   const session = new Session({
     userId,
@@ -79,6 +144,40 @@ export async function updateSessionActivity(token: string): Promise<void> {
   await Session.updateOne(
     { token, isActive: true },
     { lastActivity: new Date() }
+  );
+}
+
+// Update session fingerprint (IP/UA/location) together with activity
+export async function updateSessionActivityDetailed(
+  token: string,
+  userAgent: string,
+  ip: string,
+  location?: LocationInfo | null
+): Promise<void> {
+  await connectToDatabase();
+  const ua = parseUserAgent(userAgent);
+  const existing = await Session.findOne({ token, isActive: true }).select('deviceInfo.ip');
+  if (!existing) return;
+
+  let loc: LocationInfo | null | undefined = location;
+  const ipChanged = ip && existing.deviceInfo?.ip !== ip;
+  if (!loc && ipChanged && !isPrivateIp(ip)) {
+    try { loc = await getLocationFromIP(ip); } catch { /* noop */ }
+  }
+
+  const update: any = {
+    lastActivity: new Date(),
+    'deviceInfo.userAgent': userAgent,
+    'deviceInfo.ip': ip,
+  };
+  if (ua.browser) update['deviceInfo.browser'] = ua.browser;
+  if (ua.os) update['deviceInfo.os'] = ua.os;
+  if (ua.device) update['deviceInfo.device'] = ua.device;
+  if (loc) update['location'] = loc;
+
+  await Session.updateOne(
+    { token, isActive: true },
+    { $set: update }
   );
 }
 

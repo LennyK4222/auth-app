@@ -9,7 +9,6 @@ import { SecuritySettings } from '@/components/settings/SecuritySettings';
 import { NotificationSettings } from '@/components/settings/NotificationSettings';
 import { PrivacySettings } from '@/components/settings/PrivacySettings';
 import { UserStats } from '@/components/settings/UserStats';
-import { Heartbeat } from '@/components/Heartbeat';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -28,7 +27,6 @@ export default async function SettingsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
       <main className="relative mx-auto max-w-6xl px-4 py-10">
-        <Heartbeat />
         
         {/* Header modern cu avatar și statistici */}
         <ProfileHeader user={payload} />

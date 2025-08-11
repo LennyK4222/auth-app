@@ -13,7 +13,7 @@ import { Spinner } from '@/components/ui/spinner';
 import Link from 'next/link';
 import { AuroraBackground } from '@/components/AuroraBackground';
 import { toast } from 'react-hot-toast';
-import { useCsrfToken } from '@/hooks/useCsrfToken';
+import { useCsrfContext } from '@/contexts/CsrfContext';
 
 const Schema = z.object({ password: z.string().min(6, 'Minim 6 caractere'), confirm: z.string() }).refine((d) => d.password === d.confirm, {
   message: 'Parolele nu coincid',
@@ -29,7 +29,7 @@ export default function ResetPage() {
 
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<Values>({ resolver: zodResolver(Schema) });
   const [done, setDone] = useState(false);
-  const { csrfToken } = useCsrfToken();
+  const { csrfToken } = useCsrfContext();
 
   const onSubmit = async (values: Values) => {
     if (!token) {

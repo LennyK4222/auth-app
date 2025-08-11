@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Heart } from 'lucide-react';
-import { useCsrfToken } from '@/hooks/useCsrfToken';
+import { useCsrfContext } from '@/contexts/CsrfContext';
 
 interface LikeButtonProps {
   postId: string;
@@ -15,9 +15,9 @@ export default function LikeButton({ postId, initialLikes, initialLiked }: LikeB
   const [liked, setLiked] = useState(initialLiked);
   const [loading, setLoading] = useState(false);
   const [showAnimation, setShowAnimation] = useState(false);
-  const { csrfToken } = useCsrfToken();
+  const { csrfToken, refreshToken } = useCsrfContext();
 
-  const handleLike = async () => {
+  const handleLike = async (retryCount: number = 0) => {
     if (!csrfToken || loading) return;
 
     setLoading(true);
@@ -37,6 +37,13 @@ export default function LikeButton({ postId, initialLikes, initialLiked }: LikeB
         },
         credentials: 'include'
       });
+
+      if (res.status === 403 && retryCount < 2) {
+        // Token might be expired, refresh and retry
+        await refreshToken();
+        setTimeout(() => handleLike(retryCount + 1), 1000);
+        return;
+      }
 
       if (!res.ok) {
         // Revert on error
@@ -62,10 +69,12 @@ export default function LikeButton({ postId, initialLikes, initialLiked }: LikeB
     }
   };
 
+  const onClick = () => handleLike(0);
+
   return (
     <div className="flex flex-col items-center gap-1">
       <motion.button
-        onClick={handleLike}
+        onClick={onClick}
         disabled={loading}
         className={`relative p-2 rounded-full transition-all duration-200 ${
           liked 

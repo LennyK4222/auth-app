@@ -1,16 +1,16 @@
 "use client";
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useCsrfToken } from '@/hooks/useCsrfToken';
+import { useCsrfContext } from '@/contexts/CsrfContext';
 
 export default function VoteBox({ postId, score: initial }: { postId: string; score: number }) {
   const [score, setScore] = useState(initial);
   const [loading, setLoading] = useState(false);
   const [lastAction, setLastAction] = useState<'up'|'down'|'clear'|null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
-  const { csrfToken } = useCsrfToken();
+  const { csrfToken, refreshToken } = useCsrfContext();
   
-  const act = async (dir: 'up'|'down'|'clear') => {
+  const act = async (dir: 'up'|'down'|'clear', retryCount: number = 0) => {
     if (!csrfToken || loading) return; // Wait for CSRF token and prevent double clicks
     
     setLoading(true);
@@ -27,6 +27,13 @@ export default function VoteBox({ postId, score: initial }: { postId: string; sc
         credentials: 'include', 
         body: JSON.stringify({ dir }) 
       });
+      
+      if (res.status === 403 && retryCount < 2) {
+        // Token might be expired, refresh and retry
+        await refreshToken();
+        setTimeout(() => act(dir, retryCount + 1), 1000);
+        return;
+      }
       
       if (res.ok) {
         const data = await res.json();

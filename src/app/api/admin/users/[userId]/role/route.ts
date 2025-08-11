@@ -6,7 +6,7 @@ import { User } from '@/models/User';
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     await connectToDatabase();
@@ -29,7 +29,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    const { userId } = params;
+  const { userId } = await params;
     const { role } = await request.json();
 
     // Validează rolul

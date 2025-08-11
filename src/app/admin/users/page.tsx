@@ -1,40 +1,26 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import UsersManagement from '@/components/admin/UsersManagement';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function AdminUsersPage() {
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const { user, loading, isAuthenticated, hasRole } = useAuth();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await fetch('/api/auth/me');
-        if (response.ok) {
-          const userData = await response.json();
-          if (userData.role === 'admin') {
-            setIsAuthorized(true);
-          } else {
-            router.push('/');
-          }
-        } else {
-          router.push('/login');
-        }
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        router.push('/login');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    if (loading) return;
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+    if (!hasRole('admin')) {
+      router.push('/');
+    }
+  }, [loading, isAuthenticated, hasRole, router]);
 
-    checkAuth();
-  }, [router]);
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900 flex items-center justify-center">
         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8">
@@ -45,7 +31,7 @@ export default function AdminUsersPage() {
     );
   }
 
-  if (!isAuthorized) {
+  if (!user || !hasRole('admin')) {
     return null;
   }
 

@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Trash2, Send, MessageSquare } from 'lucide-react';
-import { useCsrfToken } from '@/hooks/useCsrfToken';
+import { useCsrfContext } from '@/contexts/CsrfContext';
 
 type Comment = {
   id: string;
@@ -38,7 +38,7 @@ export default function CommentsSection({
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
   const lastRefresh = useRef(0);
-  const { csrfToken } = useCsrfToken();
+  const { csrfToken, refreshToken } = useCsrfContext();
 
   const headers: HeadersInit = useMemo(() => {
     const h: Record<string, string> = { "Content-Type": "application/json" };
@@ -71,10 +71,7 @@ export default function CommentsSection({
     };
   }, [postId]);
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const text = body.trim();
-    if (!text) return;
+  const submitComment = async (text: string, retryCount = 0) => {
     try {
       setBusy(true);
       const res = await fetch(`/api/posts/${postId}/comment`, {
@@ -82,6 +79,14 @@ export default function CommentsSection({
         headers,
         body: JSON.stringify({ body: text }),
       });
+      
+      if (res.status === 403 && retryCount < 2) {
+        // Token might be expired, refresh and retry
+        await refreshToken();
+        // Small delay to ensure new token is ready
+        setTimeout(() => submitComment(text, retryCount + 1), 1000);
+        return;
+      }
       
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ error: 'Network error' }));
@@ -106,12 +111,27 @@ export default function CommentsSection({
     }
   };
 
-  const onDelete = async (commentId: string) => {
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const text = body.trim();
+    if (!text) return;
+    await submitComment(text);
+  };
+
+  const onDelete = async (commentId: string, retryCount = 0) => {
     try {
       const res = await fetch(`/api/posts/${postId}/comment/${commentId}`, {
         method: "DELETE",
         headers,
       });
+      
+      if (res.status === 403 && retryCount < 2) {
+        // Token might be expired, refresh and retry
+        await refreshToken();
+        setTimeout(() => onDelete(commentId, retryCount + 1), 1000);
+        return;
+      }
+      
       if (res.ok) {
         setComments(prev => prev.filter(c => c.id !== commentId));
       }

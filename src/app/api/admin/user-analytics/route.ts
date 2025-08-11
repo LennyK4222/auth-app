@@ -111,7 +111,16 @@ export async function GET(request: NextRequest) {
       }
     ]);
 
-    const topUsers = topUsersData.map((userData: any) => ({
+    const topUsers = topUsersData.map((userData: {
+      _id: { toString: () => string };
+      username?: string;
+      email?: string;
+      avatar?: string;
+      postsCount?: number;
+      commentsCount?: number;
+      createdAt?: string | Date;
+      lastSeenAt?: string | Date;
+    }) => ({
       _id: userData._id.toString(),
       username: userData.username || 'Unknown',
       email: userData.email || 'No email',

@@ -1,12 +1,12 @@
 'use client';
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useCsrfToken } from '../../hooks/useCsrfToken';
+import { useCsrfContext } from '@/contexts/CsrfContext';
 
 export default function ChangeEmailCard({ currentEmail }: { currentEmail: string }) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const { csrfToken } = useCsrfToken();
+  const { csrfToken } = useCsrfContext();
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();

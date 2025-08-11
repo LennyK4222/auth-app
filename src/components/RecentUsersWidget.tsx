@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
+import { useApp } from '@/hooks/useApp';
 
 type Item = { id: string; name: string | null; email: string; avatar: string | null; createdAt: string; lastLoginAt: string | null; lastSeenAt?: string | null; online?: boolean };
 
@@ -51,41 +52,25 @@ function UserAvatar({ user, size = 7 }: { user: Item; size?: number }) {
 }
 
 export function RecentUsersWidget({ className = '' }: { className?: string }) {
+  const { state, refreshRecentUsers } = useApp();
   const [items, setItems] = useState<Item[]>([]);
-  const [loading, setLoading] = useState(true);
+  const loading = state.loadingRecentUsers;
   const [onlyOnline, setOnlyOnline] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
-
+  
+  // Mirror global state into local view state and keep it sorted
   useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        const res = await fetch('/api/user/recent?limit=8', { cache: 'no-store' });
-        const data = (await res.json()) as { users: Item[] };
-        if (!alive) return;
-        const list = (data.users || [])
-          .slice()
-          .sort((a, b) => Number(!!b.online) - Number(!!a.online));
-        setItems(list);
-      } catch {
-        if (alive) setItems([]);
-      } finally {
-        if (alive) setLoading(false);
-      }
-    })();
-    return () => { alive = false; };
-  }, [refreshKey]);
+    const list = (state.recentUsers || [])
+      .slice()
+      .sort((a, b) => Number(!!b.online) - Number(!!a.online));
+    setItems(list as Item[]);
+  }, [state.recentUsers]);
 
-  // Refresh when heartbeat succeeds, and also poll every 30s as a fallback
+  // Ensure we have initial data (AppProvider already primes on mount)
   useEffect(() => {
-    const onBeat = () => setRefreshKey(k => k + 1);
-    window.addEventListener('heartbeat-ok', onBeat);
-    const id = setInterval(onBeat, 30000);
-    return () => {
-      window.removeEventListener('heartbeat-ok', onBeat);
-      clearInterval(id);
-    };
-  }, []);
+    if (!state.recentUsers || state.recentUsers.length === 0) {
+      void refreshRecentUsers(8);
+    }
+  }, [state.recentUsers, refreshRecentUsers]);
 
   const onlineCount = useMemo(() => items.filter(i => i.online).length, [items]);
   const shown = useMemo(() => (onlyOnline ? items.filter(i => i.online) : items), [items, onlyOnline]);
@@ -102,7 +87,7 @@ export function RecentUsersWidget({ className = '' }: { className?: string }) {
           {onlyOnline ? 'Afișează toți' : 'Doar activi'}
         </button>
       </div>
-      {loading ? (
+  {loading ? (
         <div className="text-sm text-slate-500">Se încarcă…</div>
       ) : shown.length === 0 ? (
         <div className="text-sm text-slate-500">Încă nimic de afișat.</div>

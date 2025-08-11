@@ -6,13 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'react-hot-toast';
-import { useCsrfToken } from '@/hooks/useCsrfToken';
+import { useCsrfContext } from '@/contexts/CsrfContext';
 
 export function UpdateProfileCard({ initialName, email }: { initialName?: string; email: string }) {
   const router = useRouter();
   const [name, setName] = useState(initialName || '');
   const [loading, setLoading] = useState(false);
-  const { csrfToken } = useCsrfToken();
+  const { csrfToken } = useCsrfContext();
 
   const onSave = async () => {
     if (!csrfToken) return;

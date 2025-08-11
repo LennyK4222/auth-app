@@ -20,19 +20,28 @@ const nextConfig: NextConfig = {
     ],
   },
   
-  // Headers to improve font loading
+  // Headers: security + caching for static assets
   headers: async () => [
+    // Global small headers
     {
       source: '/:path*',
       headers: [
-        {
-          key: 'X-DNS-Prefetch-Control',
-          value: 'on',
-        },
-        {
-          key: 'X-Frame-Options',
-          value: 'DENY',
-        },
+        { key: 'X-DNS-Prefetch-Control', value: 'on' },
+        { key: 'X-Frame-Options', value: 'DENY' },
+      ],
+    },
+    // Cache Next static assets aggressively
+    {
+      source: '/_next/static/:path*',
+      headers: [
+        { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+      ],
+    },
+    // Cache public assets like svg, ico, images
+    {
+      source: '/:all*(svg|jpg|jpeg|png|gif|webp|ico|css|js|woff|woff2)',
+      headers: [
+        { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
       ],
     },
   ],

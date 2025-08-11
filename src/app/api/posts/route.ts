@@ -37,18 +37,22 @@ export async function GET(req: NextRequest) {
   const page = Math.max(1, Number(url.searchParams.get('page') || 1));
   const pageSize = Math.min(20, Number(url.searchParams.get('pageSize') || 10));
   const sort = url.searchParams.get('sort') || 'hot'; // hot|new
+  const rawCategory = url.searchParams.get('category') || undefined;
+  // Basic slug validation: lowercase letters, numbers and dashes only
+  const category = rawCategory && rawCategory !== 'all' && /^[a-z0-9-]{1,50}$/.test(rawCategory) ? rawCategory : undefined;
   const skip = (page - 1) * pageSize;
   const sortObj: Record<string, SortDirection> = sort === 'new' 
     ? { createdAt: -1 } 
     : { score: -1, createdAt: -1 };
+  const filter = category ? { category } : {};
   const [items, total] = await Promise.all([
-    Post.find({}, { title: 1, body: 1, authorEmail: 1, authorName: 1, authorId: 1, commentsCount: 1, score: 1, createdAt: 1, votes: 1, category: 1 })
+    Post.find(filter, { title: 1, body: 1, authorEmail: 1, authorName: 1, authorId: 1, commentsCount: 1, score: 1, createdAt: 1, votes: 1, category: 1 })
       .populate('authorId', 'avatar name email')
       .sort(sortObj)
       .skip(skip)
       .limit(pageSize)
       .lean(),
-    Post.countDocuments(),
+    Post.countDocuments(filter),
   ]);
   let meSub: string | null = null;
   try {

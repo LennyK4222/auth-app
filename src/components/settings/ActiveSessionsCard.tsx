@@ -28,6 +28,46 @@ export default function ActiveSessionsCard() {
   const [loading, setLoading] = useState(true);
   const [terminating, setTerminating] = useState<string | null>(null);
 
+  const formatIp = (ip?: string) => {
+    if (!ip) return 'unknown';
+    const m = ip.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+    if (m) return m[1];
+    if (ip === '::1') return '127.0.0.1';
+    return ip;
+  };
+
+  const isPrivateIp = (ip?: string) => {
+    if (!ip) return true;
+    const v4 = formatIp(ip);
+    if (!v4) return true;
+    if (v4 === 'unknown') return true;
+    if (v4.startsWith('10.')) return true;
+    if (v4.startsWith('192.168.')) return true;
+    if (v4.startsWith('172.')) {
+      const second = parseInt(v4.split('.')[1] || '0', 10);
+      if (second >= 16 && second <= 31) return true;
+    }
+    if (v4.startsWith('127.')) return true;
+    // Simple IPv6 private/link-local checks on the original string
+    if (ip.startsWith('fc') || ip.startsWith('fd')) return true;
+    if (ip.startsWith('fe80:')) return true;
+    return false;
+  };
+
+  const countryFlag = (country?: string) => {
+    if (!country) return null;
+    const code = country.trim().toUpperCase();
+    if (!/^[A-Z]{2}$/.test(code)) return null;
+    const base = 127397; // regional indicator symbol letter A
+    try {
+      return String.fromCodePoint(
+        ...code.split('').map(c => c.charCodeAt(0) + base)
+      );
+    } catch {
+      return null;
+    }
+  };
+
   useEffect(() => {
     fetchSessions();
   }, []);
@@ -185,10 +225,34 @@ export default function ActiveSessionsCard() {
                       {session.deviceInfo.browser || 'Unknown Browser'} on{' '}
                       {session.deviceInfo.os || 'Unknown OS'}
                     </div>
-                    <div className="text-sm text-gray-500">
-                      {session.deviceInfo.device || 'Desktop'} • {session.deviceInfo.ip}
-                      {session.location?.city && ` • ${session.location.city}`}
-                      {session.location?.country && `, ${session.location.country}`}
+                    <div className="text-sm text-gray-500 flex flex-wrap items-center gap-2">
+                      <span>{session.deviceInfo.device || 'Desktop'}</span>
+                      <span>•</span>
+                      <span>{formatIp(session.deviceInfo.ip)}</span>
+                      {isPrivateIp(session.deviceInfo.ip) && (
+                        <>
+                          <span>•</span>
+                          <span>Private network</span>
+                        </>
+                      )}
+                      {(session.location?.city || session.location?.country) && (
+                        <>
+                          <span>•</span>
+                          <span className="inline-flex items-center gap-1">
+                            <span role="img" aria-label="location">📍</span>
+                            {session.location?.city}
+                            {session.location?.country && (
+                              <>
+                                {session.location?.city ? ', ' : ''}
+                                {countryFlag(session.location.country) && (
+                                  <span title={session.location.country}>{countryFlag(session.location.country)}</span>
+                                )}
+                                <span>{session.location.country}</span>
+                              </>
+                            )}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                   {session.isCurrent && (

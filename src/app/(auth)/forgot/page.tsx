@@ -12,7 +12,7 @@ import { Spinner } from '@/components/ui/spinner';
 import Link from 'next/link';
 import { AuroraBackground } from '@/components/AuroraBackground';
 import { toast } from 'react-hot-toast';
-import { useCsrfToken } from '@/hooks/useCsrfToken';
+import { useCsrfContext } from '@/contexts/CsrfContext';
 
 const Schema = z.object({ email: z.string().email('Email invalid') });
 
@@ -21,7 +21,7 @@ type Values = z.infer<typeof Schema>;
 export default function ForgotPage() {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Values>({ resolver: zodResolver(Schema) });
   const [sent, setSent] = useState(false);
-  const { csrfToken } = useCsrfToken();
+  const { csrfToken } = useCsrfContext();
 
   const onSubmit = async (values: Values) => {
     const res = await fetch('/api/auth/password/reset-request', {

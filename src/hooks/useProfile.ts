@@ -6,7 +6,7 @@ export interface UserProfile {
   _id: string;
   email: string;
   name?: string;
-  role?: 'user' | 'admin';
+  role?: 'user' | 'admin' | 'moderator';
   bio?: string;
   company?: string;
   location?: string;

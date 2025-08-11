@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyAuthToken } from '@/lib/auth/jwt';
 import { createSession } from '@/lib/sessions';
+import { getClientIp, getUserAgent } from '@/lib/request';
 
 // Endpoint pentru migrarea utilizatorilor existenți la sistemul de sesiuni
 export async function POST(_req: NextRequest) {
@@ -22,14 +23,12 @@ export async function POST(_req: NextRequest) {
     }
     
     // Create session for existing user
-    const userAgent = _req.headers.get('user-agent') || 'Unknown';
-    const ip = _req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 
-              _req.headers.get('x-real-ip') || 
-              'unknown';
+  const userAgent = getUserAgent(_req) || 'Unknown';
+  const ip = getClientIp(_req);
     const expiresAt = new Date(Date.now() + 60 * 60 * 24 * 7 * 1000); // 7 days
     
     try {
-      await createSession(user.sub, token, userAgent, ip, expiresAt);
+  await createSession(user.sub, token, userAgent, ip, expiresAt);
       return NextResponse.json({ 
         message: 'Session created successfully',
         userId: user.sub 

@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 
 interface AppState {
   categories: Array<{
@@ -24,6 +24,17 @@ interface AppState {
     createdAt: string;
     category?: string;
   }>;
+  recentUsers: Array<{
+    id: string;
+    name: string | null;
+    email: string;
+    avatar: string | null;
+    createdAt: string;
+    lastLoginAt: string | null;
+    lastSeenAt?: string | null;
+    online?: boolean;
+  }>;
+  loadingRecentUsers: boolean;
   refreshTrigger: number;
 }
 
@@ -35,6 +46,8 @@ interface AppContextType {
   decrementCategoryCount: (categorySlug: string) => void;
   addPost: (post: AppState['posts'][0]) => void;
   removePost: (postId: string) => void;
+  setRecentUsers: (users: AppState['recentUsers']) => void;
+  refreshRecentUsers: (limit?: number) => Promise<void>;
   triggerRefresh: () => void;
 }
 
@@ -44,6 +57,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>({
     categories: [],
     posts: [],
+  recentUsers: [],
+  loadingRecentUsers: false,
     refreshTrigger: 0
   });
 
@@ -106,6 +121,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setState(prev => ({ ...prev, refreshTrigger: prev.refreshTrigger + 1 }));
   }, []);
 
+  const setRecentUsers = useCallback((users: AppState['recentUsers']) => {
+    setState(prev => ({ ...prev, recentUsers: users }));
+  }, []);
+
+  const refreshRecentUsers = useCallback(async (limit = 8) => {
+    try {
+      setState(prev => ({ ...prev, loadingRecentUsers: true }));
+      const res = await fetch(`/api/user/recent?limit=${encodeURIComponent(String(limit))}`, { cache: 'no-store' });
+      if (!res.ok) throw new Error('Failed to load recent users');
+      const data = (await res.json()) as { users: AppState['recentUsers'] };
+      const list = (data.users || [])
+        .slice()
+        .sort((a, b) => Number(!!b.online) - Number(!!a.online));
+      setState(prev => ({ ...prev, recentUsers: list }));
+    } catch {
+      setState(prev => ({ ...prev, recentUsers: [] }));
+    } finally {
+      setState(prev => ({ ...prev, loadingRecentUsers: false }));
+    }
+  }, []);
+
+  // Keep recent users fresh: on heartbeat-ok and as a fallback every 30s
+  useEffect(() => {
+    const onBeat = () => { void refreshRecentUsers(); };
+    window.addEventListener('heartbeat-ok', onBeat);
+    const id = setInterval(onBeat, 30000);
+    // Prime on mount once
+    void refreshRecentUsers();
+    return () => {
+      window.removeEventListener('heartbeat-ok', onBeat);
+      clearInterval(id);
+    };
+  }, [refreshRecentUsers]);
+
   return (
     <AppContext.Provider value={{
       state,
@@ -115,6 +164,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       decrementCategoryCount,
       addPost,
       removePost,
+  setRecentUsers,
+  refreshRecentUsers,
       triggerRefresh
     }}>
       {children}

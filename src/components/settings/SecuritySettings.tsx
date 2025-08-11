@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
-import { useCsrfToken } from '../../hooks/useCsrfToken';
+import { useCsrfContext } from '@/contexts/CsrfContext';
 import { 
   Key, 
   Smartphone, 
@@ -51,7 +51,7 @@ export function SecuritySettings({}: SecuritySettingsProps) {
   const [loading, setLoading] = useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [loginNotifications, setLoginNotifications] = useState(true);
-  const { csrfToken } = useCsrfToken();
+  const { csrfToken } = useCsrfContext();
   
   // Sessions state
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
@@ -161,6 +161,47 @@ export function SecuritySettings({}: SecuritySettingsProps) {
       case 'mobile': return '📱';
       case 'tablet': return '📱';
       default: return '💻';
+    }
+  };
+
+  const formatIp = (ip?: string) => {
+    if (!ip) return 'necunoscut';
+    // Normalize IPv6-mapped IPv4
+    const m = ip.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+    if (m) return m[1];
+    if (ip === '::1') return '127.0.0.1';
+    return ip;
+  };
+
+  const isPrivateIp = (ip?: string) => {
+    if (!ip) return true;
+    const v4 = formatIp(ip);
+    if (!v4) return true;
+    if (v4 === 'necunoscut') return true;
+    if (v4.startsWith('10.')) return true;
+    if (v4.startsWith('192.168.')) return true;
+    if (v4.startsWith('172.')) {
+      const second = parseInt(v4.split('.')[1] || '0', 10);
+      if (second >= 16 && second <= 31) return true;
+    }
+    if (v4.startsWith('127.')) return true;
+    // Simple IPv6 private/link-local checks on the original string
+    if (ip.startsWith('fc') || ip.startsWith('fd')) return true;
+    if (ip.startsWith('fe80:')) return true;
+    return false;
+  };
+
+  const countryFlag = (country?: string) => {
+    if (!country) return null;
+    const code = country.trim().toUpperCase();
+    if (!/^[A-Z]{2}$/.test(code)) return null;
+    const base = 127397; // regional indicator symbol letter A
+    try {
+      return String.fromCodePoint(
+        ...code.split('').map(c => c.charCodeAt(0) + base)
+      );
+    } catch {
+      return null;
     }
   };
 
@@ -542,11 +583,19 @@ export function SecuritySettings({}: SecuritySettingsProps) {
                           </div>
                           <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
                             <span>{session.deviceInfo.device || 'Desktop'}</span>
-                            {session.location?.city && (
+                            {(session.location?.city || session.location?.country) && (
                               <div className="flex items-center gap-1">
                                 <MapPin size={12} />
-                                {session.location.city}
-                                {session.location.country && `, ${session.location.country}`}
+                                {session.location?.city}
+                                {session.location?.country && (
+                                  <>
+                                    {session.location?.city ? ', ' : ''}
+                                    {countryFlag(session.location.country) && (
+                                      <span title={session.location.country}>{countryFlag(session.location.country)}</span>
+                                    )}
+                                    <span>{session.location.country}</span>
+                                  </>
+                                )}
                               </div>
                             )}
                             <div className="flex items-center gap-1">
@@ -555,7 +604,7 @@ export function SecuritySettings({}: SecuritySettingsProps) {
                             </div>
                           </div>
                           <div className="text-xs text-slate-400 mt-1">
-                            IP: {session.deviceInfo.ip}
+                            IP: {formatIp(session.deviceInfo.ip)}{isPrivateIp(session.deviceInfo.ip) ? ' • Rețea privată' : ''}
                           </div>
                         </div>
                       </div>

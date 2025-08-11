@@ -6,7 +6,6 @@ import Image from 'next/image';
 import { connectToDatabase } from '@/lib/db';
 import { Category } from '@/models/Category';
 import { Post } from '@/models/Post';
-import { Heartbeat } from '@/components/Heartbeat';
 
 // TypeScript interfaces for lean() query results
 interface CategoryLean {
@@ -199,7 +198,6 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
-      <Heartbeat />
       
       <main className="relative mx-auto max-w-7xl px-4 py-8">
         {/* Header cu categoria */}

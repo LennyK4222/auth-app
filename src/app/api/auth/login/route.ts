@@ -8,6 +8,7 @@ import { rateLimit } from '@/lib/rateLimit';
 import { validateCsrf } from '@/lib/csrf';
 import { createSession } from '@/lib/sessions';
 import { awardXPForDailyLogin } from '@/lib/xp';
+import { getClientIp, getUserAgent } from '@/lib/request';
 
 const LoginSchema = z.object({
   email: z.string().email(),
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest) {
   // CSRF check
   const csrfOk = await validateCsrf(req);
   if (!csrfOk) return NextResponse.json({ error: 'CSRF invalid' }, { status: 403 });
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';
+  const ip = getClientIp(req);
     const { exceeded } = rateLimit(`login:${ip}`);
     if (exceeded) {
       return NextResponse.json({ error: 'Prea multe încercări. Încearcă mai târziu.' }, { status: 429 });
@@ -85,7 +86,7 @@ export async function POST(req: NextRequest) {
   });
 
   // Create session record
-  const userAgent = req.headers.get('user-agent') || '';
+  const userAgent = getUserAgent(req);
   const expiresAt = new Date(Date.now() + 60 * 60 * 24 * 7 * 1000); // 7 days
   try {
     await createSession(user._id.toString(), token, userAgent, ip, expiresAt);
