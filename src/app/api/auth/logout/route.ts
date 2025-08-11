@@ -4,7 +4,7 @@ import { validateCsrf } from '@/lib/csrf';
 import { Session } from '@/models/Session';
 
 export async function POST(request: NextRequest) {
-  let csrfOk = await validateCsrf(request);
+  let csrfOk = await validateCsrf(request as unknown as Request);
   if (!csrfOk) {
     // Fallback for HTML form posts: read token from form body
     try {
@@ -15,6 +15,22 @@ export async function POST(request: NextRequest) {
       csrfOk = Boolean(formToken && cookieToken && String(formToken) === cookieToken);
     } catch {
       csrfOk = false;
+    }
+  }
+  if (!csrfOk) {
+    // As a last resort, allow same-origin POST if csrf cookie exists (helps first-run cases)
+    try {
+      const origin = request.headers.get('origin') || '';
+      const { origin: urlOrigin } = new URL(request.url);
+      if (origin && origin === urlOrigin) {
+        const cookieStore = await cookies();
+        const cookieToken = cookieStore.get('csrf')?.value;
+        if (cookieToken && /^[a-f0-9]{64}$/i.test(cookieToken)) {
+          csrfOk = true;
+        }
+      }
+    } catch {
+      // ignore
     }
   }
   if (!csrfOk) return NextResponse.json({ error: 'CSRF invalid' }, { status: 403 });

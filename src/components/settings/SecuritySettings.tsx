@@ -51,7 +51,7 @@ export function SecuritySettings({}: SecuritySettingsProps) {
   const [loading, setLoading] = useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [loginNotifications, setLoginNotifications] = useState(true);
-  const { csrfToken } = useCsrfContext();
+  const { csrfToken, isLoading: csrfLoading, refreshToken: refreshCsrf } = useCsrfContext();
   
   // Sessions state
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
@@ -107,35 +107,90 @@ export function SecuritySettings({}: SecuritySettingsProps) {
     }
   };
 
+  // Ensure we have a CSRF token before making a mutating request
+  const ensureCsrf = async (): Promise<string | null> => {
+    // Prefer in-memory token
+    if (csrfToken && /^[a-f0-9]{64}$/i.test(csrfToken)) return csrfToken;
+    // Fallback to cookie
+    try {
+      const fromCookie = document.cookie.split('; ').find(c => c.startsWith('csrf='))?.split('=')[1];
+      if (fromCookie && /^[a-f0-9]{64}$/i.test(decodeURIComponent(fromCookie))) {
+        return decodeURIComponent(fromCookie);
+      }
+    } catch {}
+    // Refresh via context
+    try {
+      await refreshCsrf();
+    } catch {}
+    // Try cookie again after refresh
+    try {
+      const fromCookie2 = document.cookie.split('; ').find(c => c.startsWith('csrf='))?.split('=')[1];
+      if (fromCookie2 && /^[a-f0-9]{64}$/i.test(decodeURIComponent(fromCookie2))) {
+        return decodeURIComponent(fromCookie2);
+      }
+    } catch {}
+    return null;
+  };
+
   const terminateSession = async (sessionId: string) => {
     if (terminating) return;
     
     setTerminating(sessionId);
     
     try {
-      const response = await fetch(`/api/user/sessions/${sessionId}`, {
+      const token = await ensureCsrf();
+      if (!token) {
+        toast.error('Nu s-a putut obține token-ul CSRF');
+        return;
+      }
+
+      const doRequest = async () => fetch(`/api/user/sessions/${sessionId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken
+          'Accept': 'application/json',
+          'X-CSRF-Token': token,
         },
         credentials: 'include',
       });
-      
-      if (!response.ok) throw new Error('Failed to terminate session');
-      
+
+      let response = await doRequest();
+      if (response.status === 403) {
+        // refresh csrf and retry once
+        try { await refreshCsrf(); } catch {}
+        const token2 = await ensureCsrf();
+        if (token2) {
+          response = await fetch(`/api/user/sessions/${sessionId}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'X-CSRF-Token': token2,
+            },
+            credentials: 'include',
+          });
+        }
+      }
+
+      if (!response.ok) {
+        const errBody = await response.json().catch(() => ({} as any));
+        const msg = errBody?.error || 'Failed to terminate session';
+        throw new Error(msg);
+      }
+
       const data = await response.json();
-      
+
       if (sessionId === 'all') {
         toast.success(`${data.terminatedCount} sessions terminated`);
       } else {
         toast.success('Session terminated');
       }
-      
+
       // Refresh sessions list
       fetchSessions();
     } catch (error) {
-      toast.error('Failed to terminate session');
+      const msg = error instanceof Error ? error.message : 'Failed to terminate session';
+      toast.error(msg);
       console.error('Error terminating session:', error);
     } finally {
       setTerminating(null);
@@ -541,13 +596,13 @@ export function SecuritySettings({}: SecuritySettingsProps) {
               </div>
             ) : (
               <>
-                {sessions.length > 1 && (
+        {sessions.length > 1 && (
                   <div className="flex justify-end mb-4">
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => terminateSession('all')}
-                      disabled={terminating === 'all'}
+          disabled={terminating === 'all' || csrfLoading}
                       className="px-4 py-2 text-sm text-red-600 border border-red-200 rounded-xl hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
                     >
                       {terminating === 'all' ? 'Se închid...' : 'Închide toate celelalte sesiuni'}
@@ -598,7 +653,7 @@ export function SecuritySettings({}: SecuritySettingsProps) {
                                 )}
                               </div>
                             )}
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1" suppressHydrationWarning>
                               <Clock size={12} />
                               {formatLastActivity(session.lastActivity)}
                             </div>
@@ -608,12 +663,12 @@ export function SecuritySettings({}: SecuritySettingsProps) {
                           </div>
                         </div>
                       </div>
-                      {!session.isCurrent && (
+            {!session.isCurrent && (
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => terminateSession(session.id)}
-                          disabled={terminating === session.id}
+              disabled={terminating === session.id || csrfLoading}
                           className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
                         >
                           {terminating === session.id ? 'Se închide...' : 'Deconectează'}

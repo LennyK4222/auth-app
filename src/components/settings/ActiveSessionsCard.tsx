@@ -262,7 +262,7 @@ export default function ActiveSessionsCard() {
                   )}
                 </div>
                 
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600" suppressHydrationWarning>
                   Last activity: {formatLastActivity(session.lastActivity)}
                 </div>
               </div>

@@ -353,7 +353,7 @@ export default function Feed() {
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock size={12} />
-                        <span>{timeAgo(p.createdAt)}</span>
+                        <span suppressHydrationWarning>{timeAgo(p.createdAt)}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Tag size={12} />

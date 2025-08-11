@@ -8,11 +8,12 @@ export async function GET() {
     
     const response = NextResponse.json({ csrfToken });
     
-    // Set CSRF token as httpOnly cookie
+    // Set CSRF token as readable cookie to support double-submit header pattern
     response.cookies.set('csrf', csrfToken, {
-      httpOnly: true,
+      httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
+      path: '/',
       maxAge: 60 * 60 * 24 // 24 hours
     });
     

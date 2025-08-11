@@ -76,7 +76,7 @@ export function RecentUsersWidget({ className = '' }: { className?: string }) {
   const shown = useMemo(() => (onlyOnline ? items.filter(i => i.online) : items), [items, onlyOnline]);
 
   return (
-    <aside className={`pointer-events-auto fixed bottom-4 right-4 z-20 w-[min(92vw,340px)] rounded-2xl border border-slate-200 bg-white/80 p-3 shadow-lg backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 ${className}`}>
+    <aside suppressHydrationWarning className={`pointer-events-auto fixed bottom-4 right-4 z-20 w-[min(92vw,340px)] rounded-2xl border border-slate-200 bg-white/80 p-3 shadow-lg backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 ${className}`}>
       <div className="mb-2 flex items-center justify-between">
         <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Utilizatori activi/noi <span className="ml-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">{onlineCount} online</span></div>
         <button
@@ -88,9 +88,9 @@ export function RecentUsersWidget({ className = '' }: { className?: string }) {
         </button>
       </div>
   {loading ? (
-        <div className="text-sm text-slate-500">Se încarcă…</div>
+        <div className="text-sm text-slate-500" suppressHydrationWarning>Se încarcă…</div>
       ) : shown.length === 0 ? (
-        <div className="text-sm text-slate-500">Încă nimic de afișat.</div>
+        <div className="text-sm text-slate-500" suppressHydrationWarning>Încă nimic de afișat.</div>
       ) : (
         <ul className="space-y-2">
           {shown.map((u: Item) => (
@@ -107,7 +107,7 @@ export function RecentUsersWidget({ className = '' }: { className?: string }) {
                   {u.online ? (
                     <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500"/> Online</span>
                   ) : (
-                    <span>Văzut {timeAgo(u.lastSeenAt || u.lastLoginAt || u.createdAt)} în urmă</span>
+                    <span suppressHydrationWarning>Văzut {timeAgo(u.lastSeenAt || u.lastLoginAt || u.createdAt)} în urmă</span>
                   )}
                 </div>
               </div>

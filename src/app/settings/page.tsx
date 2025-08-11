@@ -19,7 +19,8 @@ export default async function SettingsPage() {
   if (!token) redirect('/login');
   let payload: { sub: string; email: string; name?: string };
   try {
-    payload = await verifyAuthToken(token);
+    // Require active session; redirect if the session was terminated
+    payload = await verifyAuthToken(token, true);
   } catch {
     redirect('/login');
   }

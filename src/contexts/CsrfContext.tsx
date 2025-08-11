@@ -26,21 +26,23 @@ export function CsrfProvider({ children }: { children: ReactNode }) {
 
   const fetchCsrfToken = async () => {
     try {
-      const response = await fetch('/api/csrf');
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+      // Prefer cookie first to avoid generating multiple tokens
+      const fromCookie = document.cookie.split('; ').find(c => c.startsWith('csrf='))?.split('=')[1];
+      if (fromCookie && /^[a-f0-9]{64}$/i.test(decodeURIComponent(fromCookie))) {
+        setCsrfToken(decodeURIComponent(fromCookie));
+        setIsLoading(false);
+        return;
       }
-      
+
+      const response = await fetch('/api/csrf');
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
-      
       if (data.csrfToken && typeof data.csrfToken === 'string' && data.csrfToken.length === 64) {
         setCsrfToken(data.csrfToken);
-        setIsLoading(false);
       } else {
         setCsrfToken('');
-        setIsLoading(false);
       }
+      setIsLoading(false);
     } catch (error) {
       console.error('CSRF Context fetch error:', error);
       setCsrfToken('');

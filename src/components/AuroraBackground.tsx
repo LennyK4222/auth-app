@@ -5,7 +5,7 @@ import React from 'react';
 // A subtle, performant aurora gradient background using radial gradients and parallax
 export function AuroraBackground({ className = '' }: { className?: string }) {
   return (
-    <div className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`} aria-hidden>
+  <div className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`} aria-hidden suppressHydrationWarning>
       <motion.div
         className="absolute -top-1/3 -left-1/4 h-[120vmin] w-[120vmin] rounded-full"
         style={{

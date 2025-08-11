@@ -2,12 +2,14 @@
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useEffect, useState } from 'react';
+import { useCsrfContext } from '@/contexts/CsrfContext';
 
 type SSRUser = { name?: string; email: string; role?: string } | null;
 
 export default function Navbar({ ssrIsAuthed = false, ssrUser = null }: { ssrIsAuthed?: boolean; ssrUser?: SSRUser }) {
   const { user, isAuthenticated, hasRole } = useAuth();
   const [hydrated, setHydrated] = useState(false);
+  const { csrfToken } = useCsrfContext();
 
   useEffect(() => {
     setHydrated(true);
@@ -21,7 +23,7 @@ export default function Navbar({ ssrIsAuthed = false, ssrUser = null }: { ssrIsA
     : (ssrUser?.name || ssrUser?.email?.split('@')[0] || '');
 
   return (
-    <nav className="sticky top-0 z-10 border-b border-slate-200/60 bg-white/95 backdrop-blur-md dark:border-slate-800/60 dark:bg-slate-900/95">
+    <nav className="sticky top-0 z-10 border-b border-slate-200/60 bg-white/95 backdrop-blur-md dark:border-slate-800/60 dark:bg-slate-900/95" suppressHydrationWarning>
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2">
@@ -72,6 +74,8 @@ export default function Navbar({ ssrIsAuthed = false, ssrUser = null }: { ssrIsA
                 ⚙️ Setări
               </Link>
               <form action="/api/auth/logout" method="POST" className="inline">
+                {/* Include CSRF as hidden field for non-JS form submit fallback */}
+                <input type="hidden" name="csrf" value={csrfToken || ''} />
                 <button
                   type="submit"
                   className="px-3 py-2 text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition-colors"

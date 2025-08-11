@@ -13,9 +13,11 @@ function getCookie(req: NextRequest, name: string) {
   }
 }
 
-function base64urlRandom() {
-  // Use UUID v4 and strip dashes for a simple random token suitable for CSRF
-  return (crypto as unknown as Crypto).randomUUID().replace(/-/g, '');
+function hexRandom64() {
+  // Generate 32 random bytes => 64 hex chars using Web Crypto
+  const arr = new Uint8Array(32);
+  (crypto as unknown as Crypto).getRandomValues(arr);
+  return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 export function middleware(request: NextRequest) {
@@ -46,7 +48,7 @@ export function middleware(request: NextRequest) {
   // Issue CSRF token cookie (double-submit) if missing
   let csrf = getCookie(request, 'csrf');
   if (!csrf) {
-    csrf = base64urlRandom();
+    csrf = hexRandom64();
     const isLocalhost = host === 'localhost' || host?.startsWith('127.0.0.1');
     const secure = process.env.NODE_ENV === 'production' && !isLocalhost;
     res.cookies.set('csrf', csrf, {

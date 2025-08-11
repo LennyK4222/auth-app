@@ -3,28 +3,51 @@ import { useCsrfContext } from '@/contexts/CsrfContext';
 import { toast } from 'react-hot-toast';
 
 export function LogoutButton() {
-  const { csrfToken } = useCsrfContext();
+  const { csrfToken, refreshToken } = useCsrfContext();
 
   const handleLogout = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!csrfToken) {
-      toast.error('CSRF token not available');
-      return;
-    }
+    const getCookieToken = () => {
+      try {
+        const raw = document.cookie.split('; ').find(c => c.startsWith('csrf='))?.split('=')[1];
+        return raw ? decodeURIComponent(raw) : '';
+      } catch {
+        return '';
+      }
+    };
 
-    try {
-      const res = await fetch('/api/auth/logout', {
+    const tryLogout = async (token: string) => {
+      return fetch('/api/auth/logout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken
+          'X-CSRF-Token': token
         },
         credentials: 'include'
       });
+    };
+
+    try {
+      let token = csrfToken || getCookieToken();
+      if (!token) {
+        await refreshToken().catch(() => {});
+        token = getCookieToken();
+      }
+      if (!token) {
+        toast.error('CSRF token not available');
+        return;
+      }
+
+      let res = await tryLogout(token);
+      if (res.status === 403) {
+        // Refresh token and retry once
+        await refreshToken().catch(() => {});
+        token = getCookieToken();
+        if (token) res = await tryLogout(token);
+      }
 
       if (res.ok) {
-        // Redirect to login page or home
         window.location.href = '/';
       } else {
         const data = await res.json().catch(() => ({}));

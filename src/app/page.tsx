@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation';
 import { verifyAuthToken } from '@/lib/auth/jwt';
 import Link from 'next/link';
 import { RecentUsersWidget } from '@/components/RecentUsersWidget';
-import Heartbeat from '@/components/Heartbeat';
 import { AuroraBackground } from '@/components/AuroraBackground';
 import Feed from '../components/Feed';
 import { ClientCategories } from '@/components/ClientCategories';
@@ -90,14 +89,14 @@ export default async function RootPage() {
   }
 
   try {
-  await verifyAuthToken(token);
+  await verifyAuthToken(token, true);
   const categories = await getCategories();
     
     return (
       <>
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
           <main className="relative mx-auto max-w-7xl px-4 py-8">
-            <Heartbeat />
+            {/* Heartbeat runs globally from the root layout */}
 
           {/* Hero Section */}
           <section className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white/95 backdrop-blur-sm p-8 shadow-lg dark:border-slate-800/80 dark:bg-slate-900/95">

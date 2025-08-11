@@ -58,7 +58,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     categories: [],
     posts: [],
   recentUsers: [],
-  loadingRecentUsers: false,
+  loadingRecentUsers: true,
     refreshTrigger: 0
   });
 
@@ -148,7 +148,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     window.addEventListener('heartbeat-ok', onBeat);
     const id = setInterval(onBeat, 30000);
     // Prime on mount once
-    void refreshRecentUsers();
+  void refreshRecentUsers();
     return () => {
       window.removeEventListener('heartbeat-ok', onBeat);
       clearInterval(id);

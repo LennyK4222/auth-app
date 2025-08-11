@@ -10,6 +10,7 @@ import { verifyAuthToken } from "@/lib/auth/jwt";
 import { connectToDatabase } from "@/lib/db";
 import { User } from "@/models/User";
 import Navbar from "@/components/Navbar";
+import Heartbeat from "@/components/Heartbeat";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -68,7 +69,7 @@ export default async function RootLayout({
           <AuthProvider>
             <Navbar ssrIsAuthed={isAuthed} ssrUser={userInfo} />
             <AppProvider>
-              {/* {isAuthed && <Heartbeat />} */}
+              {isAuthed && <Heartbeat />}
               {children}
             </AppProvider>
           </AuthProvider>

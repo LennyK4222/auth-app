@@ -8,8 +8,9 @@ export async function GET() {
     const token = cookieStore.get('token')?.value;
     if (!token) return NextResponse.json({ user: null }, { status: 200 });
 
-    const payload = await verifyAuthToken(token);
-    return NextResponse.json({ user: payload });
+  // Require an active session; if session was terminated, treat as unauthenticated
+  const payload = await verifyAuthToken(token, true);
+  return NextResponse.json({ user: payload });
   } catch {
     return NextResponse.json({ user: null }, { status: 200 });
   }
