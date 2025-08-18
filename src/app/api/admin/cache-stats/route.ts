@@ -1,18 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyAuthToken } from '@/lib/auth/jwt';
 import { userCache } from '@/lib/userCache';
 
 export const revalidate = 0;
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     // Verifică autentificarea
     const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     
-    const payload = await verifyAuthToken(token);
+    await verifyAuthToken(token);
     
     // Verifică rolul de admin
     // (Poți adăuga verificare suplimentară aici pentru rolul admin)
@@ -40,13 +40,13 @@ export async function GET(req: NextRequest) {
       }
     });
     
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 }
 
 // Clear cache endpoint (doar pentru admin)
-export async function DELETE(req: NextRequest) {
+export async function DELETE() {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;
@@ -61,7 +61,7 @@ export async function DELETE(req: NextRequest) {
       timestamp: new Date().toISOString()
     });
     
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 }

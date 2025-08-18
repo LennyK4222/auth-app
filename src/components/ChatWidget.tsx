@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { MessageSquare, X, Send, Minimize2, Maximize2, Wifi } from "lucide-react"
 import { useCsrfContext } from "@/contexts/CsrfContext"
+import Image from "next/image"
 
 type ChatMessage = {
   id: string
@@ -87,7 +88,7 @@ export default function ChatWidget({
       try {
         const data = JSON.parse(e.data)
         if (Array.isArray(data)) {
-          const count = data.filter((u: any) => u?.online).length
+          const count = data.filter((u: { online?: boolean }) => Boolean(u?.online)).length
           setOnlineCount(count)
         }
       } catch {}
@@ -219,15 +220,17 @@ export default function ChatWidget({
                 <div
                   key={msg.id}
                   className="flex items-start space-x-2 animate-in slide-in-from-bottom duration-300"
-                  style={{ animationDelay: `${index * 100}ms` as any }}
+                  style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <div className="flex-shrink-0">
                     {msg.avatar ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={msg.avatar}
                         alt={msg.user}
+                        width={24}
+                        height={24}
                         className="w-6 h-6 rounded-full object-cover border border-cyan-500/40"
+                        unoptimized
                       />
                     ) : (
                       <div className="w-6 h-6 bg-gradient-to-br from-cyan-400 to-purple-600 rounded-full flex items-center justify-center relative">

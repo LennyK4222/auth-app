@@ -1,15 +1,13 @@
 "use client";
 
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, type ComponentProps } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/components/ui/toast';
-import { MessageSquare, Calendar, User as UserIcon, Trash2, Bookmark, Tag, Clock } from 'lucide-react';
+import { MessageSquare, Calendar, User as UserIcon, Trash2, Bookmark, Tag } from 'lucide-react';
 import { useCsrfContext } from '@/contexts/CsrfContext';
 import { ConfirmDialog } from '@/components/ui/dialog';
 import Image from 'next/image';
-import HolographicDisplay from './HolographicDisplay';
 import LikeButton from './LikeButton';
-import { useApp } from '@/hooks/useApp';
 import { useAuth } from '@/hooks/useAuth';
 
 interface CategoryPost {
@@ -97,7 +95,7 @@ function TimeAgo({ iso }: { iso?: string | null }) {
   return <span suppressHydrationWarning>{timeAgo}</span>;
 }
 
-function ClientImage({ src, alt, ...props }: { src: string; alt: string; [key: string]: any }) {
+function ClientImage({ src, alt, ...props }: { src: string; alt: string } & Omit<ComponentProps<typeof Image>, 'src' | 'alt'>) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -135,7 +133,6 @@ export default function CategoryFeedClient({ initialPosts, categorySlug, initial
   });
   const { toast, ToastContainer } = useToast();
   const { csrfToken } = useCsrfContext();
-  const { state } = useApp();
   const { user } = useAuth();
 
   // Ensure sort state is synchronized with initialSort prop
@@ -290,8 +287,6 @@ export default function CategoryFeedClient({ initialPosts, categorySlug, initial
       setDeletingId(null);
     }
   }, [csrfToken, toast, mounted]);
-
-  const canDelete = (_authorId: string) => true;
 
   if (loading) {
     return (

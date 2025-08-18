@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Clock, Tag, Bookmark, Trash2, User, Crown, Shield } from 'lucide-react';
+import { MessageSquare, Clock, Tag, Bookmark, Trash2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCsrfContext } from '@/contexts/CsrfContext';
 import { useToast } from '@/components/ui/toast';
@@ -163,19 +163,6 @@ export default function BookmarksClient({ initialBookmarks }: BookmarksClientPro
       setLoading(false);
     }
   };
-
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return <Crown className="w-4 h-4 text-yellow-500" />;
-      case 'moderator':
-        return <Shield className="w-4 h-4 text-blue-500" />;
-      default:
-        return <User className="w-4 h-4 text-gray-400" />;
-    }
-  };
-
-
 
   if (bookmarks.length === 0) {
     return (

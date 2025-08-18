@@ -88,7 +88,7 @@ export default function Feed() {
   const { toast, ToastContainer } = useToast();
   const { csrfToken } = useCsrfContext();
   const { state } = useApp();
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   const load = useCallback(async () => {
     setLoading(true);

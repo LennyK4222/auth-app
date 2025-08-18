@@ -6,8 +6,6 @@ import { CsrfProvider } from "@/contexts/CsrfContext";
 import "./globals.css";
 import { cookies, headers } from "next/headers";
 import { verifyAuthToken } from "@/lib/auth/jwt";
-import { connectToDatabase } from "@/lib/db";
-import { User } from "@/models/User";
 import Navbar from "@/components/Navbar";
 import Heartbeat from "@/components/Heartbeat";
 
@@ -34,20 +32,11 @@ export default async function RootLayout({
   const cspNonce = hdrs.get('x-nonce') || undefined;
   const token = cookieStore.get("token")?.value;
   let isAuthed = false;
-  let userInfo: { name?: string; email: string; role?: string } | null = null;
   
   if (token) {
     try {
-      const payload = await verifyAuthToken(token);
-      await connectToDatabase();
-      const user = await User.findById(payload.sub).select('name email role');
-      
+      await verifyAuthToken(token);
       isAuthed = true;
-      userInfo = {
-        name: user?.name || (payload as { name?: string }).name || '',
-        email: user?.email || (payload as { email?: string }).email || '',
-        role: user?.role || 'user'
-      };
     } catch {}
   }
   return (
@@ -69,7 +58,7 @@ export default async function RootLayout({
         />
         <CsrfProvider>
           <AuthProvider>
-            <Navbar ssrIsAuthed={isAuthed} ssrUser={userInfo} />
+            <Navbar ssrIsAuthed={isAuthed} />
             <AppProvider>
               {isAuthed && <Heartbeat />}
               {children}

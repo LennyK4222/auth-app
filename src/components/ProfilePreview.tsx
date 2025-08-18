@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from "framer-motion";
 import { Briefcase, MapPin, Link as LinkIcon, Award, CalendarDays } from "lucide-react";
+import Image from 'next/image';
 
 type PublicProfile = {
   id: string;
@@ -55,16 +56,6 @@ export function ProfilePreviewTrigger({ userId, children }: TriggerProps) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const openWithDelay = (delay = 180) => {
-    if (!userId) return;
-    if (openTimer.current) window.clearTimeout(openTimer.current);
-    openTimer.current = window.setTimeout(() => {
-      positionPopover();
-      setOpen(true);
-      fetchProfile();
-    }, delay);
   };
 
   const closeNow = () => {
@@ -189,7 +180,7 @@ export function ProfilePreviewTrigger({ userId, children }: TriggerProps) {
               style={{
                 left: pos.x,
                 top: pos.y,
-                transform: placement === 'above' ? ('translateY(calc(-100% - 20px))' as any) : undefined
+                transform: placement === 'above' ? 'translateY(calc(-100% - 20px))' : undefined
               }}
               onMouseEnter={() => {
                 if (closeTimer.current) window.clearTimeout(closeTimer.current);
@@ -205,8 +196,7 @@ export function ProfilePreviewTrigger({ userId, children }: TriggerProps) {
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full overflow-hidden neon-ring bg-gradient-to-br from-cyan-500 to-fuchsia-600 flex items-center justify-center">
                     {profile?.avatar ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={profile.avatar} alt={profile.name || profile.email} className="w-full h-full object-cover" />
+                      <Image src={profile.avatar} alt={profile.name || profile.email} width={48} height={48} className="w-full h-full object-cover" unoptimized />
                     ) : (
                       <span className="text-white font-bold">
                         {(profile?.name || profile?.email || "?")?.slice(0, 1).toUpperCase()}

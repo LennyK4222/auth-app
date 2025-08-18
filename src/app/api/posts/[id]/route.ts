@@ -3,7 +3,7 @@ import { connectToDatabase } from '@/lib/db';
 import { Post } from '@/models/Post';
 import { Comment } from '@/models/Comment';
 import { User } from '@/models/User';
-import { verifyAuthToken } from '@/lib/auth/jwt';
+import { verifyAuthToken, type JWTPayload } from '@/lib/auth/jwt';
 import { Types } from 'mongoose';
 
 interface PostDoc {
@@ -43,7 +43,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;
     if (token) {
-      const payload = await verifyAuthToken(token as any).catch(() => null) as { sub?: string } | null;
+      const payload = await verifyAuthToken(token).catch(() => null) as JWTPayload | null;
       if (payload?.sub) meSub = String(payload.sub);
     }
   } catch {}
@@ -52,14 +52,15 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const comments = await Comment.find(
     { postId: id }, 
     { body: 1, authorEmail: 1, authorName: 1, authorId: 1, createdAt: 1, likes: 1, likedBy: 1 }
-  ).sort({ createdAt: 1 }).lean() as unknown as (CommentDoc & { likes?: number; likedBy?: any[] })[];
+  ).sort({ createdAt: 1 }).lean() as unknown as (CommentDoc & { likes?: number; likedBy?: Array<string | Types.ObjectId> })[];
   // Fetch avatars for unique authorIds
-  const authorIds = Array.from(new Set(comments.map(c => String((c as any).authorId))));
-  let avatarsMap = new Map<string, string | null>();
+  const authorIds = Array.from(new Set(comments.map(c => String(c.authorId))));
+  const avatarsMap = new Map<string, string | null>();
   if (authorIds.length) {
-    const users = await User.find({ _id: { $in: authorIds } }, { avatar: 1 }).lean();
+    const rawUsers = await User.find({ _id: { $in: authorIds } }, { avatar: 1 }).lean();
+    const users = rawUsers as unknown as Array<{ _id: Types.ObjectId | string; avatar?: string | null }>; 
     for (const u of users) {
-      avatarsMap.set(String((u as any)._id), (u as any).avatar || null);
+      avatarsMap.set(String(u._id), u.avatar || null);
     }
   }
   return NextResponse.json({
@@ -79,7 +80,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     authorId: String(c.authorId), 
     createdAt: c.createdAt,
     likes: typeof c.likes === 'number' ? c.likes : 0,
-    likedByMe: meSub ? (Array.isArray((c as any).likedBy) && (c as any).likedBy.some((u: any) => String(u) === meSub)) : false,
+    likedByMe: meSub ? (Array.isArray(c.likedBy) && c.likedBy.some((u) => String(u) === meSub)) : false,
     authorAvatar: avatarsMap.get(String(c.authorId)) || null,
   })),
   });

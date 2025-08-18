@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
       // Get user's bookmarks
       const { User } = await import('@/models/User');
       const userDoc = await User.findById(user.sub).select('bookmarks').lean();
-      userBookmarks = userDoc?.bookmarks?.map((id: any) => String(id)) || [];
+      userBookmarks = userDoc?.bookmarks?.map((id: unknown) => String(id)) || [];
     }
   } catch {}
 

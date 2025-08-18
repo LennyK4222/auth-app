@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ComponentProps, type HTMLAttributes } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Trash2, Send, MessageSquare } from 'lucide-react';
 import { useCsrfContext } from '@/contexts/CsrfContext';
@@ -8,6 +8,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
 import CommentLikeButton from '@/components/CommentLikeButton';
 import { ProfilePreviewTrigger } from '@/components/ProfilePreview';
+import Image from 'next/image';
 
 type Comment = {
   id: string;
@@ -260,12 +261,20 @@ export default function CommentsSection({
                   remarkPlugins={[remarkGfm]}
                   rehypePlugins={[rehypeSanitize]}
                   components={{
-                    a: (props: any) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-cyan-300 hover:underline" />,
-                    code: (props: any) => {
+                    a: (props: ComponentProps<'a'>) => (
+                      <a {...props} target="_blank" rel="noopener noreferrer" className="text-cyan-300 hover:underline" />
+                    ),
+                    code: (props: HTMLAttributes<HTMLElement> & { className?: string }) => {
                       const { className, children, ...rest } = props;
-                      return <code className={`rounded bg-slate-800/80 px-1.5 py-0.5 ${className || ''}`} {...rest}>{children}</code>;
+                      return (
+                        <code className={`rounded bg-slate-800/80 px-1.5 py-0.5 ${className || ''}`} {...rest}>
+                          {children}
+                        </code>
+                      );
                     },
-                    pre: (props: any) => <pre className="rounded-lg bg-slate-900/80 p-3 overflow-x-auto" {...props} />
+                    pre: (props: HTMLAttributes<HTMLPreElement>) => (
+                      <pre className="rounded-lg bg-slate-900/80 p-3 overflow-x-auto" {...props} />
+                    )
                   }}
                 >
                   {body}
@@ -296,12 +305,13 @@ export default function CommentsSection({
                           <ProfilePreviewTrigger userId={String(c.authorId || '')}>
                             <div className="flex items-center gap-2">
                               {c.authorAvatar ? (
-                                <img
+                                <Image
                                   src={c.authorAvatar}
                                   alt={c.authorName || c.authorEmail || 'avatar'}
+                                  width={24}
+                                  height={24}
                                   className="w-6 h-6 rounded-full object-cover neon-ring"
-                                  loading="lazy"
-                                  referrerPolicy="no-referrer"
+                                  unoptimized
                                 />
                               ) : (
                                 <div className="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-500 to-fuchsia-600 flex items-center justify-center text-white neon-ring">
@@ -333,14 +343,26 @@ export default function CommentsSection({
                             remarkPlugins={[remarkGfm]}
                             rehypePlugins={[rehypeSanitize]}
                             components={{
-                              a: (props: any) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-cyan-300 hover:underline" />,
-                              code: (props: any) => {
+                              a: (props: ComponentProps<'a'>) => (
+                                <a {...props} target="_blank" rel="noopener noreferrer" className="text-cyan-300 hover:underline" />
+                              ),
+                              code: (props: HTMLAttributes<HTMLElement> & { className?: string }) => {
                                 const { className, children, ...rest } = props;
-                                return <code className={`rounded bg-slate-800/80 px-1.5 py-0.5 ${className || ''}`} {...rest}>{children}</code>;
+                                return (
+                                  <code className={`rounded bg-slate-800/80 px-1.5 py-0.5 ${className || ''}`} {...rest}>
+                                    {children}
+                                  </code>
+                                );
                               },
-                              pre: (props: any) => <pre className="rounded-lg bg-slate-900/80 p-3 overflow-x-auto" {...props} />,
-                              ul: (props: any) => <ul className="list-disc pl-5" {...props} />,
-                              ol: (props: any) => <ol className="list-decimal pl-5" {...props} />
+                              pre: (props: HTMLAttributes<HTMLPreElement>) => (
+                                <pre className="rounded-lg bg-slate-900/80 p-3 overflow-x-auto" {...props} />
+                              ),
+                              ul: (props: HTMLAttributes<HTMLUListElement>) => (
+                                <ul className="list-disc pl-5" {...props} />
+                              ),
+                              ol: (props: HTMLAttributes<HTMLOListElement>) => (
+                                <ol className="list-decimal pl-5" {...props} />
+                              )
                             }}
                           >
                             {c.body}

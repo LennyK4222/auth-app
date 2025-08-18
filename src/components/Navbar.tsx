@@ -6,9 +6,7 @@ import { useCsrfContext } from '@/contexts/CsrfContext';
 import ChatWidget from '@/components/ChatWidget';
 import { MessageSquare, Shield, Terminal, LogOut, Settings, UserCircle, LogIn } from 'lucide-react';
 
-type SSRUser = { name?: string; email: string; role?: string } | null;
-
-export default function Navbar({ ssrIsAuthed = false, ssrUser = null }: { ssrIsAuthed?: boolean; ssrUser?: SSRUser }) {
+export default function Navbar({ ssrIsAuthed = false }: { ssrIsAuthed?: boolean }) {
   const [hydrated, setHydrated] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   
