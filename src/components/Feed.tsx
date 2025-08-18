@@ -411,7 +411,7 @@ export default function Feed() {
                           }}
                           className="flex items-center gap-3 cursor-pointer group"
                         >
-                          <div className="relative">
+                          <div className="relative" data-admin-avatar={p.authorRole === 'admin' ? '1' : undefined}>
                             {p.authorAvatar ? (
                               <Image
                                 src={p.authorAvatar}
@@ -427,34 +427,18 @@ export default function Feed() {
                                 {getInitials(p.authorName, p.authorEmail)}
                               </div>
                             )}
-                            {p.authorRole === 'admin' && (
-                              <>
-                                {/* Thin rotating ring behind avatar */}
-                                <span className="pointer-events-none absolute -inset-1 rounded-full border border-cyan-400/25 shadow-[0_0_6px_rgba(34,211,238,0.25)] animate-rotate-fast -z-10" aria-hidden />
-                                {/* Two subtle sparks orbiting behind */}
-                                <span className="pointer-events-none absolute inset-0 rounded-full animate-orbit -z-10" aria-hidden>
-                                  <span className="absolute top-0 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-cyan-200/80 shadow-[0_0_6px_rgba(34,211,238,0.7)] animate-spark" />
-                                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-fuchsia-200/80 shadow-[0_0_6px_rgba(217,70,239,0.7)] animate-spark delay-300" />
-                                </span>
-                              </>
-                            )}
+                            {/* Admin avatar effects handled globally via AdminAura (see data-admin-avatar) */}
                           </div>
                           <div>
                             <span className="font-semibold text-base text-cyan-200 group-hover:text-white">
                               {p.authorName || p.authorEmail}
                             </span>
                             {p.authorRole === 'admin' ? (
-                              <span className="relative ml-2 inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold align-middle bg-red-500/20 text-red-200 ring-1 ring-red-500/50 shadow-[0_0_14px_rgba(239,68,68,0.45)] overflow-visible">
-                                {/* Goku-style aura layers behind the badge */}
-                                <span className="pointer-events-none absolute -inset-1 rounded-full bg-[conic-gradient(from_0deg,rgba(251,191,36,0.0),rgba(251,191,36,0.28),rgba(59,130,246,0.22),rgba(251,191,36,0.0))] animate-rotate-aura blur-[8px] opacity-80 -z-10" aria-hidden />
-                                <span className="pointer-events-none absolute inset-0 rounded-full ring-2 ring-amber-300/35 blur-[1px] animate-ki-pulse -z-10" aria-hidden />
-                                <span className="pointer-events-none absolute -top-2 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-amber-300/90 shadow-[0_0_8px_rgba(251,191,36,0.85)] animate-ki-orb -z-10" aria-hidden />
-
-                                {/* animated shimmer over the badge content */}
-                                <span className="pointer-events-none absolute inset-0 overflow-hidden rounded-full" aria-hidden>
-                                  <span className="absolute -inset-y-px -left-1/3 w-1/2 bg-gradient-to-r from-transparent via-red-400/60 to-transparent blur-[2px] opacity-70 animate-admin-shimmer" />
-                                </span>
-                                <Shield size={12} className="text-red-300 drop-shadow-[0_0_6px_rgba(239,68,68,0.6)]" />
+                              <span
+                                data-admin-badge
+                                className="relative ml-2 inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold align-middle bg-red-500/20 text-red-200 ring-1 ring-red-500/50"
+                              >
+                                <Shield size={12} className="text-red-300" />
                                 Admin
                               </span>
                             ) : (
