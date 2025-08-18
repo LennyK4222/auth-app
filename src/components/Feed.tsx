@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/components/ui/toast';
-import { MessageSquare, TrendingUp, Clock, Trash2, Tag, Bookmark } from 'lucide-react';
+import { MessageSquare, TrendingUp, Clock, Trash2, Tag, Bookmark, Shield } from 'lucide-react';
 import { useCsrfContext } from '@/contexts/CsrfContext';
 import { ConfirmDialog } from '@/components/ui/dialog';
 import Image from 'next/image';
@@ -411,28 +411,57 @@ export default function Feed() {
                           }}
                           className="flex items-center gap-3 cursor-pointer group"
                         >
-                          {p.authorAvatar ? (
-                            <Image
-                              src={p.authorAvatar}
-                              alt={p.authorName || p.authorEmail}
-                              width={40}
-                              height={40}
-                              className="w-10 h-10 rounded-full object-cover border-2 border-cyan-500/40 group-hover:border-cyan-400 transition-colors shadow neon-ring"
-                              unoptimized
-                              suppressHydrationWarning
-                            />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-fuchsia-600 flex items-center justify-center text-white text-lg font-bold group-hover:from-cyan-400 group-hover:to-fuchsia-500 transition-all shadow neon-ring">
-                              {getInitials(p.authorName, p.authorEmail)}
-                            </div>
-                          )}
+                          <div className="relative">
+                            {p.authorAvatar ? (
+                              <Image
+                                src={p.authorAvatar}
+                                alt={p.authorName || p.authorEmail}
+                                width={40}
+                                height={40}
+                                className="relative z-10 w-10 h-10 rounded-full object-cover border-2 border-cyan-500/40 group-hover:border-cyan-400 transition-colors shadow neon-ring"
+                                unoptimized
+                                suppressHydrationWarning
+                              />
+                            ) : (
+                              <div className="relative z-10 w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-fuchsia-600 flex items-center justify-center text-white text-lg font-bold group-hover:from-cyan-400 group-hover:to-fuchsia-500 transition-all shadow neon-ring">
+                                {getInitials(p.authorName, p.authorEmail)}
+                              </div>
+                            )}
+                            {p.authorRole === 'admin' && (
+                              <>
+                                {/* Thin rotating ring behind avatar */}
+                                <span className="pointer-events-none absolute -inset-1 rounded-full border border-cyan-400/25 shadow-[0_0_6px_rgba(34,211,238,0.25)] animate-rotate-fast -z-10" aria-hidden />
+                                {/* Two subtle sparks orbiting behind */}
+                                <span className="pointer-events-none absolute inset-0 rounded-full animate-orbit -z-10" aria-hidden>
+                                  <span className="absolute top-0 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-cyan-200/80 shadow-[0_0_6px_rgba(34,211,238,0.7)] animate-spark" />
+                                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-fuchsia-200/80 shadow-[0_0_6px_rgba(217,70,239,0.7)] animate-spark delay-300" />
+                                </span>
+                              </>
+                            )}
+                          </div>
                           <div>
                             <span className="font-semibold text-base text-cyan-200 group-hover:text-white">
                               {p.authorName || p.authorEmail}
                             </span>
-                            <span className={`ml-2 px-2 py-1 rounded-full text-xs font-semibold align-middle ${p.authorRole === 'admin' ? 'bg-red-500/20 text-red-300' : p.authorRole === 'moderator' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-cyan-500/20 text-cyan-300'} w-fit`}>
-                              {typeof p.authorRole === 'string' && p.authorRole.trim() ? (p.authorRole === 'user' ? '👤 Utilizator' : `👤 ${p.authorRole}`) : '👤 Utilizator'}
-                            </span>
+                            {p.authorRole === 'admin' ? (
+                              <span className="relative ml-2 inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold align-middle bg-red-500/20 text-red-200 ring-1 ring-red-500/50 shadow-[0_0_14px_rgba(239,68,68,0.45)] overflow-visible">
+                                {/* Goku-style aura layers behind the badge */}
+                                <span className="pointer-events-none absolute -inset-1 rounded-full bg-[conic-gradient(from_0deg,rgba(251,191,36,0.0),rgba(251,191,36,0.28),rgba(59,130,246,0.22),rgba(251,191,36,0.0))] animate-rotate-aura blur-[8px] opacity-80 -z-10" aria-hidden />
+                                <span className="pointer-events-none absolute inset-0 rounded-full ring-2 ring-amber-300/35 blur-[1px] animate-ki-pulse -z-10" aria-hidden />
+                                <span className="pointer-events-none absolute -top-2 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-amber-300/90 shadow-[0_0_8px_rgba(251,191,36,0.85)] animate-ki-orb -z-10" aria-hidden />
+
+                                {/* animated shimmer over the badge content */}
+                                <span className="pointer-events-none absolute inset-0 overflow-hidden rounded-full" aria-hidden>
+                                  <span className="absolute -inset-y-px -left-1/3 w-1/2 bg-gradient-to-r from-transparent via-red-400/60 to-transparent blur-[2px] opacity-70 animate-admin-shimmer" />
+                                </span>
+                                <Shield size={12} className="text-red-300 drop-shadow-[0_0_6px_rgba(239,68,68,0.6)]" />
+                                Admin
+                              </span>
+                            ) : (
+                              <span className={`ml-2 px-2 py-1 rounded-full text-xs font-semibold align-middle ${p.authorRole === 'moderator' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-cyan-500/20 text-cyan-300'} w-fit`}>
+                                {typeof p.authorRole === 'string' && p.authorRole.trim() ? (p.authorRole === 'user' ? 'Utilizator' : p.authorRole) : 'Utilizator'}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </ProfilePreviewTrigger>
@@ -574,6 +603,58 @@ export default function Feed() {
         isDestructive={true}
         isLoading={deletingId === deleteDialog.postId}
       />
+
+      {/* Admin badge + Goku aura + Electric avatar animations */}
+      <style jsx>{`
+        @keyframes adminShimmer {
+          0% { transform: translateX(-120%); opacity: 0.0; }
+          10% { opacity: 0.9; }
+          50% { opacity: 0.7; }
+          100% { transform: translateX(120%); opacity: 0.0; }
+        }
+        .animate-admin-shimmer { animation: adminShimmer 2.6s linear infinite; }
+
+        @keyframes kiPulse {
+          0% { transform: scale(1); opacity: 0.5; }
+          50% { transform: scale(1.15); opacity: 1; }
+          100% { transform: scale(1); opacity: 0.5; }
+        }
+        .animate-ki-pulse { animation: kiPulse 1.6s ease-in-out infinite; }
+
+        @keyframes rotateAura { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .animate-rotate-aura { animation: rotateAura 6s linear infinite; }
+
+        @keyframes kiOrb {
+          0% { transform: translate(-50%, 0) scale(0.8); opacity: 0; }
+          20% { opacity: 1; }
+          100% { transform: translate(-50%, -14px) scale(1.15); opacity: 0; }
+        }
+        .animate-ki-orb { animation: kiOrb 1.8s ease-in-out infinite; }
+
+        /* Electric avatar effects */
+        @keyframes rotateFast { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+        .animate-rotate-fast { animation: rotateFast 3s linear infinite; }
+
+        /* Orbit container rotates slowly to carry sparks around */
+        @keyframes orbit { from { transform: rotate(0); } to { transform: rotate(-360deg); } }
+        .animate-orbit { animation: orbit 4.5s linear infinite; }
+
+        /* Spark flicker/scale for each dot */
+        @keyframes spark { 
+          0% { transform: scale(0.9); opacity: 0.6; }
+          50% { transform: scale(1.15); opacity: 1; }
+          100% { transform: scale(0.9); opacity: 0.7; }
+        }
+        .animate-spark { animation: spark 1.2s ease-in-out infinite; }
+
+        /* Subtle overall flicker */
+        @keyframes flicker { 
+          0%, 100% { opacity: 0.85; }
+          40% { opacity: 0.6; }
+          60% { opacity: 1; }
+        }
+        .animate-flicker { animation: flicker 2.2s ease-in-out infinite; }
+      `}</style>
     </div>
   );
 }

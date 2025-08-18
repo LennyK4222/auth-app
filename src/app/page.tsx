@@ -9,6 +9,7 @@ import FeedClient from '../components/FeedClient';
 import HolographicDisplay from '@/components/HolographicDisplay';
 import TrendingCategories from '@/components/TrendingCategories';
 import ParticleNetwork from '@/components/ParticleNetwork';
+import AdminAura from '@/components/AdminAura';
 
 export default async function Home() {
   const cookieStore = await cookies();
@@ -27,6 +28,8 @@ export default async function Home() {
       <div className="relative min-h-screen overflow-hidden">
       {/* CONSTELLATION PARTICLE NETWORK BACKGROUND */}
       <ParticleNetwork />
+      {/* Admin-only aura overlay */}
+      <AdminAura />
       
       <main className="relative container mx-auto px-4 py-8">
         <section className="mt-8 grid gap-8 lg:grid-cols-3">
