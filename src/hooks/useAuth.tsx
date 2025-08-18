@@ -22,6 +22,18 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+// Read CSRF token from cookie (double-submit pattern)
+function readCsrfFromCookie(): string | null {
+  if (typeof document === 'undefined') return null;
+  const m = document.cookie.match(/(?:^|;\s*)csrf=([^;]+)/i);
+  if (!m) return null;
+  try { return decodeURIComponent(m[1]); } catch { return m[1]; }
+}
+
+async function ensureCsrfCookie(): Promise<void> {
+  try { await fetch('/api/csrf', { cache: 'no-store', credentials: 'include' }); } catch {}
+}
+
 async function fetchMe(): Promise<AuthUser | null> {
   try {
     const res = await fetch('/api/auth/me', { credentials: 'include', cache: 'no-store' });
@@ -82,7 +94,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+      // Ensure we have a CSRF cookie and send it as header
+      await ensureCsrfCookie();
+      const csrf = readCsrfFromCookie();
+      const headers: Record<string, string> = {};
+      if (csrf) headers['X-CSRF-Token'] = csrf;
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include', headers });
     } finally {
       setUser(null);
     }
@@ -91,6 +108,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Initial load
     void (async () => {
+      // Prime CSRF cookie early for subsequent POSTs
+      await ensureCsrfCookie();
       await load();
       lastFetchedRef.current = Date.now();
     })();

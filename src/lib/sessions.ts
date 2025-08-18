@@ -147,40 +147,6 @@ export async function updateSessionActivity(token: string): Promise<void> {
   );
 }
 
-// Update session fingerprint (IP/UA/location) together with activity
-export async function updateSessionActivityDetailed(
-  token: string,
-  userAgent: string,
-  ip: string,
-  location?: LocationInfo | null
-): Promise<void> {
-  await connectToDatabase();
-  const ua = parseUserAgent(userAgent);
-  const existing = await Session.findOne({ token, isActive: true }).select('deviceInfo.ip');
-  if (!existing) return;
-
-  let loc: LocationInfo | null | undefined = location;
-  const ipChanged = ip && existing.deviceInfo?.ip !== ip;
-  if (!loc && ipChanged && !isPrivateIp(ip)) {
-    try { loc = await getLocationFromIP(ip); } catch { /* noop */ }
-  }
-
-  const update: Record<string, unknown> = {
-    lastActivity: new Date(),
-    'deviceInfo.userAgent': userAgent,
-    'deviceInfo.ip': ip,
-  };
-  if (ua.browser) update['deviceInfo.browser'] = ua.browser;
-  if (ua.os) update['deviceInfo.os'] = ua.os;
-  if (ua.device) update['deviceInfo.device'] = ua.device;
-  if (loc) update['location'] = loc;
-
-  await Session.updateOne(
-    { token, isActive: true },
-    { $set: update }
-  );
-}
-
 // Obține toate sesiunile active ale unui utilizator
 export async function getUserActiveSessions(userId: string): Promise<ISession[]> {
   await connectToDatabase();
@@ -213,18 +179,6 @@ export async function terminateAllOtherSessions(userId: string, currentToken: st
     { isActive: false }
   );
   return result.modifiedCount;
-}
-
-// Curăță sesiunile expirate
-export async function cleanupExpiredSessions(): Promise<number> {
-  await connectToDatabase();
-  const result = await Session.deleteMany({
-    $or: [
-      { expiresAt: { $lt: new Date() } },
-      { lastActivity: { $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } } // 30 zile
-    ]
-  });
-  return result.deletedCount;
 }
 
 // Verifică dacă o sesiune este validă

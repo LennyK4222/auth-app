@@ -32,6 +32,12 @@ body {
   font-family: var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+/* Prevent horizontal scrollbars from decorative absolute/fixed layers */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
 /* Cyber theme helpers */
 .cyber-bg {
   position: absolute;
@@ -93,6 +99,15 @@ body {
 }
 @keyframes neonFlow {
   to { transform: rotate(1turn); }
+}
+
+/* Toast enter animation */
+@keyframes toastIn {
+  0% { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-toastIn {
+  animation: toastIn 0.25s ease-out both;
 }
 
 /* Glitch text effect */

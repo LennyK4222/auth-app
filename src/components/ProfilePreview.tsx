@@ -31,6 +31,7 @@ export function ProfilePreviewTrigger({ userId, children }: TriggerProps) {
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [pos, setPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [placement, setPlacement] = useState<'above' | 'below'>('above');
+  const [mounted, setMounted] = useState(false);
   const openTimer = useRef<number | null>(null);
   const longPressTimer = useRef<number | null>(null);
   const closeTimer = useRef<number | null>(null);
@@ -94,6 +95,11 @@ export function ProfilePreviewTrigger({ userId, children }: TriggerProps) {
       if (longPressTimer.current) window.clearTimeout(longPressTimer.current);
       if (closeTimer.current) window.clearTimeout(closeTimer.current);
     };
+  }, []);
+
+  // Mark mounted to safely access document in render (portal target)
+  useEffect(() => {
+    setMounted(true);
   }, []);
 
   // Close on outside click
@@ -168,7 +174,7 @@ export function ProfilePreviewTrigger({ userId, children }: TriggerProps) {
     >
       {children}
 
-      {createPortal(
+      {mounted && typeof document !== 'undefined' ? createPortal(
         <AnimatePresence>
           {open && (
             <motion.div
@@ -285,7 +291,7 @@ export function ProfilePreviewTrigger({ userId, children }: TriggerProps) {
           )}
         </AnimatePresence>,
         document.body
-      )}
+      ) : null}
     </span>
   );
 }

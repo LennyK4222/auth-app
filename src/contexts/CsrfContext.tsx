@@ -20,6 +20,25 @@ export function useCsrfContext() {
   return context;
 }
 
+// Optional version: returns a benign fallback when no provider is mounted
+export function useOptionalCsrfContext(): CsrfContextType {
+  const ctx = useContext(CsrfContext);
+  if (ctx) return ctx;
+  // Fallback: attempt to read cookie lazily on client; no-op refresher
+  let cookieToken = '';
+  if (typeof document !== 'undefined') {
+    try {
+      const raw = document.cookie.split('; ').find(c => c.startsWith('csrf='))?.split('=')[1];
+      cookieToken = raw ? decodeURIComponent(raw) : '';
+    } catch {}
+  }
+  return {
+    csrfToken: cookieToken,
+    isLoading: false,
+    refreshToken: async () => {},
+  };
+}
+
 export function CsrfProvider({ children }: { children: ReactNode }) {
   const [csrfToken, setCsrfToken] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);

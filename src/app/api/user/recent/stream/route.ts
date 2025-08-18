@@ -31,7 +31,12 @@ export async function GET(req: NextRequest) {
 
   // Heartbeat la fiecare 15s ca să nu se închidă conexiunea
   const interval = setInterval(() => {
-    writer.write(new TextEncoder().encode(`: ping\n\n`));
+    try {
+      writer.write(new TextEncoder().encode(`: ping\n\n`));
+    } catch (e) {
+      console.error('SSE heartbeat error:', e);
+      clearInterval(interval);
+    }
   }, 15000);
 
   req.signal.addEventListener('abort', () => {
@@ -46,6 +51,7 @@ export async function GET(req: NextRequest) {
       'Cache-Control': 'no-cache, no-transform',
       Connection: 'keep-alive',
       'X-Accel-Buffering': 'no',
+      'Access-Control-Allow-Origin': '*',
     },
   });
 }

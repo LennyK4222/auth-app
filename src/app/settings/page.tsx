@@ -8,6 +8,7 @@ import { AccountSettings } from '@/components/settings/AccountSettings';
 import { SecuritySettings } from '@/components/settings/SecuritySettings';
 import { NotificationSettings } from '@/components/settings/NotificationSettings';
 import { PrivacySettings } from '@/components/settings/PrivacySettings';
+import { AppearanceSettings } from '@/components/settings/AppearanceSettings';
 import { UserStats } from '@/components/settings/UserStats';
 
 export const dynamic = 'force-dynamic';
@@ -45,6 +46,7 @@ export default async function SettingsPage() {
             <SecuritySettings user={payload} />
             <NotificationSettings user={payload} />
             <PrivacySettings user={payload} />
+            <AppearanceSettings />
           </div>
         </div>
       </main>

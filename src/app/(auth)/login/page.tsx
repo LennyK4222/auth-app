@@ -15,7 +15,7 @@ import { toast } from 'react-hot-toast';
 import { Captcha } from '@/components/Captcha';
 import { Eye, EyeOff } from 'lucide-react';
 import { AuroraBackground } from '@/components/AuroraBackground';
-import { useCsrfContext } from '@/contexts/CsrfContext';
+import { useOptionalCsrfContext } from '@/contexts/CsrfContext';
 
 const LoginSchema = z.object({
   email: z.string().email('Email invalid'),
@@ -29,7 +29,7 @@ export default function LoginPage() {
   const [mounted, setMounted] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [show, setShow] = useState(false);
-  const { csrfToken } = useCsrfContext();
+  const { csrfToken, refreshToken } = useOptionalCsrfContext();
 
   const {
     register,
@@ -51,14 +51,30 @@ export default function LoginPage() {
       toast.error('Te rog completează captcha.');
       return;
     }
+    // Ensure we have a valid CSRF token; refresh if missing/invalid
+    let tokenToUse = csrfToken;
+    if (!tokenToUse || !/^[a-f0-9]{64}$/i.test(tokenToUse)) {
+      try { await refreshToken?.(); } catch {}
+      await new Promise(r => setTimeout(r, 20));
+      try {
+        tokenToUse = (typeof document !== 'undefined')
+          ? decodeURIComponent(document.cookie.split('; ').find(c => c.startsWith('csrf='))?.split('=')[1] || '')
+          : tokenToUse;
+      } catch {}
+    }
+    if (!tokenToUse || !/^[a-f0-9]{64}$/i.test(tokenToUse)) {
+      setServerError('Nu s-a putut obține tokenul CSRF. Încearcă din nou.');
+      toast.error('Token CSRF indisponibil. Reîncearcă.');
+      return;
+    }
     
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json', 
-        'X-CSRF-Token': csrfToken 
+        'X-CSRF-Token': tokenToUse 
       },
-      credentials: 'include',
+      credentials: 'same-origin',
       body: JSON.stringify({ ...values, captcha }),
     });
     const contentType = res.headers.get('content-type') || '';

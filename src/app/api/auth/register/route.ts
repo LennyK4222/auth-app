@@ -14,7 +14,24 @@ const RegisterSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
   const csrfOk = await validateCsrf(req);
-  if (!csrfOk) return NextResponse.json({ error: 'CSRF invalid' }, { status: 403 });
+  if (!csrfOk) {
+    // Debug only: log details in development to diagnose CSRF mismatch
+    if (process.env.NODE_ENV !== 'production') {
+      try {
+        const hdr = req.headers.get('x-csrf-token') || req.headers.get('X-CSRF-Token') || '';
+        const cookieHeader = req.headers.get('cookie') || '';
+        const m = cookieHeader.match(/(?:^|;\s*)csrf=([^;]+)/i);
+        const cookieVal = m ? decodeURIComponent(m[1]) : '';
+        // Avoid printing full secrets; show lengths and prefixes only
+        console.warn('[CSRF DEBUG] Register POST invalid:', {
+          headerLen: hdr.length, headerPrefix: hdr.slice(0, 8),
+          cookieLen: cookieVal.length, cookiePrefix: cookieVal.slice(0, 8),
+          headerMatchesCookie: hdr && cookieVal ? hdr === cookieVal : false,
+        });
+      } catch {}
+    }
+    return NextResponse.json({ error: 'CSRF invalid' }, { status: 403 });
+  }
     const json = await req.json();
     const { email, password, name } = RegisterSchema.parse(json);
 

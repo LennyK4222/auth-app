@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/components/ui/toast';
 import { MessageSquare, TrendingUp, Clock, Trash2, Tag, Bookmark, Shield } from 'lucide-react';
@@ -10,6 +10,8 @@ import LikeButton from './LikeButton';
 import { useApp } from '@/hooks/useApp';
 import { useAuth } from '@/hooks/useAuth';
 import { ProfilePreviewTrigger } from '@/components/ProfilePreview';
+import { apiHub } from '@/lib/apiHub';
+import { useSSEMultiple } from '@/hooks/useSSE';
 
 interface FeedPost {
   id: string;
@@ -70,7 +72,7 @@ function getInitials(name?: string, email?: string) {
   return 'U';
 }
 
-export default function Feed() {
+const Feed = memo(function Feed() {
   const [items, setItems] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -96,8 +98,20 @@ export default function Feed() {
     try {
       const params = new URLSearchParams({ sort, page: page.toString(), pageSize: pageSize.toString() });
       if (category && category !== 'all') params.set('category', category);
-      const res = await fetch(`/api/posts?${params.toString()}`);
-      const data = await res.json();
+      
+      // Use API Hub with caching and retry logic
+      const data = await apiHub.get<{ items: FeedPost[]; total: number }>(
+        `/api/posts?${params.toString()}`,
+        {
+          cacheTTL: 30000, // Cache for 30 seconds
+          retry: {
+            maxAttempts: 2,
+            backoffMs: 500
+          },
+          priority: 'high'
+        }
+      );
+      
       setItems(data.items || []);
       setTotal(data.total || 0);
     } catch (e: unknown) {
@@ -113,26 +127,27 @@ export default function Feed() {
     }
   }, [sort, category, toast, page]);
 
-  const deletePost = async (postId: string) => {
-    if (!deleteDialog.postId || !csrfToken) return;
+  const deletePost = useCallback(async (postId: string) => {
+    if (!deleteDialog.postId) return;
     
     setDeletingId(postId);
     try {
-      const res = await fetch(`/api/posts/${postId}`, {
-        method: 'DELETE',
-        headers: {
-          'X-CSRF-Token': csrfToken
+      // Use API Hub with optimistic update
+      await apiHub.delete(`/api/posts/${postId}`, {
+        optimistic: {
+          data: items.filter(item => item.id !== postId),
+          rollback: () => setItems(items) // Restore on failure
         },
-        credentials: 'include'
+        retry: {
+          maxAttempts: 1 // Don't retry deletes
+        }
       });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'Nu s-a putut șterge postarea');
-      }
 
       // Remove post from local state
       setItems(prev => prev.filter(item => item.id !== postId));
+      
+      // Clear cache for posts
+      apiHub.clearCache('/api/posts');
       
       toast({
         title: "Succes!",
@@ -151,7 +166,7 @@ export default function Feed() {
     } finally {
       setDeletingId(null);
     }
-  };
+  }, [deleteDialog.postId, items, toast]);
 
   const openDeleteDialog = (postId: string, postTitle: string) => {
     console.log('🗑️ openDeleteDialog called with postId:', postId, 'title:', postTitle);
@@ -174,11 +189,7 @@ export default function Feed() {
     setItems(prev => prev.map(item => item.id === postId ? { ...item, likedByMe: liked, score: likes } : item));
   };
 
-  const handleBookmark = async (postId: string) => {
-    console.log('🔖 handleBookmark called with postId:', postId);
-    console.log('isAuthenticated:', isAuthenticated);
-    console.log('csrfToken:', csrfToken);
-    
+  const handleBookmark = useCallback(async (postId: string) => {
     if (!isAuthenticated) {
       toast({
         title: "Eroare",
@@ -189,23 +200,26 @@ export default function Feed() {
     }
 
     try {
-      console.log('Sending bookmark request...');
-      const response = await fetch('/api/user/bookmarks', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken,
-        },
-        body: JSON.stringify({ postId }),
-      });
+      // Use API Hub with optimistic update
+      const currentPost = items.find(item => item.id === postId);
+      if (currentPost) {
+        const optimisticItems = items.map(item => 
+          item.id === postId 
+            ? { ...item, bookmarkedByMe: !item.bookmarkedByMe }
+            : item
+        );
+        
+        const response = await apiHub.post<{ bookmarked: boolean }>('/api/user/bookmarks', 
+          { postId },
+          {
+            optimistic: {
+              data: optimisticItems,
+              rollback: () => setItems(items)
+            }
+          }
+        );
 
-      console.log('Response status:', response.status);
-      console.log('Response ok:', response.ok);
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Response data:', data);
-        const { bookmarked } = data;
+        const { bookmarked } = response;
         
         setItems(prev => prev.map(item => 
           item.id === postId ? { ...item, bookmarkedByMe: bookmarked } : item
@@ -214,14 +228,6 @@ export default function Feed() {
         toast({
           title: bookmarked ? "Salvat" : "Eliminat din salvate",
           description: bookmarked ? "Postarea a fost salvată" : "Postarea a fost eliminată din salvate",
-        });
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Error response:', errorData);
-        toast({
-          title: "Eroare",
-          description: `Nu s-a putut procesa salvarea: ${response.status}`,
-          variant: "destructive",
         });
       }
     } catch (error) {
@@ -232,13 +238,46 @@ export default function Feed() {
         variant: "destructive",
       });
     }
-  };
+  }, [isAuthenticated, items, toast]);
+
+  // Set up SSE for real-time updates
+  useSSEMultiple({
+    'post:created': useCallback((data: any) => {
+      // Add new post to the top of the list if we're on the first page
+      if (page === 1 && sort === 'new') {
+        setItems(prev => [data, ...prev].slice(0, pageSize));
+        setTotal(prev => prev + 1);
+      }
+    }, [page, sort, pageSize]),
+    
+    'post:updated': useCallback((data: any) => {
+      // Update existing post
+      setItems(prev => prev.map(item => 
+        item.id === data.id ? { ...item, ...data } : item
+      ));
+    }, []),
+    
+    'post:deleted': useCallback((data: { id: string }) => {
+      // Remove deleted post
+      setItems(prev => prev.filter(item => item.id !== data.id));
+      setTotal(prev => Math.max(0, prev - 1));
+    }, []),
+    
+    'post:liked': useCallback((data: { postId: string; likes: number; userId: string }) => {
+      // Update like count
+      setItems(prev => prev.map(item => 
+        item.id === data.postId 
+          ? { ...item, score: data.likes }
+          : item
+      ));
+    }, []),
+  }, {
+    channels: ['posts'],
+    throttleMs: 100,
+    enabled: true
+  });
 
   useEffect(() => { load(); }, [load]);
-
-  useEffect(() => {
-    // Elimin log-urile de debug
-  }, [items]);
 
   return (
     <div className="space-y-6">
@@ -641,7 +680,7 @@ export default function Feed() {
       `}</style>
     </div>
   );
-}
+});
 
 function Composer({ onPosted }: { onPosted: () => void }) {
   const [title, setTitle] = useState('');
@@ -743,3 +782,5 @@ function Composer({ onPosted }: { onPosted: () => void }) {
     </motion.div>
   );
 }
+
+export default Feed;

@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
+import { useLiveStream } from "@/hooks/useLiveStream";
 
 type Item = { id: string; name: string | null; email: string; avatar: string | null; createdAt: string; lastLoginAt: string | null; lastSeenAt?: string | null; online?: boolean };
 
@@ -60,39 +61,10 @@ export function RecentUsersWidget({ className = '' }: { className?: string }) {
   const [users, setUsers] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [onlyOnline, setOnlyOnline] = useState(false);
-
-  useEffect(() => {
-    let es: EventSource | null = null;
-    let active = true;
-    setLoading(true);
-    
-    // Check if EventSource is available (client-side only)
-    if (typeof EventSource === 'undefined') {
-      setLoading(false);
-      return;
-    }
-    
-    try {
-      es = new EventSource('/api/user/recent/stream');
-      es.onmessage = (e) => {
-        if (!active) return;
-        try {
-          const data = JSON.parse(e.data);
-          setUsers(Array.isArray(data) ? data : []);
-          setLoading(false);
-        } catch {}
-      };
-      es.onerror = () => {
-        setLoading(false);
-        es?.close();
-      };
-    } catch {
-      setLoading(false);
-    }
-    return () => {
-      active = false;
-      es?.close();
-    };
+  useEffect(() => { setLoading(true); }, []);
+  useLiveStream('/api/user/recent/stream', (data) => {
+    setUsers(Array.isArray(data) ? data : []);
+    setLoading(false);
   }, []);
 
   const items = useMemo(() => {

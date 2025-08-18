@@ -2,13 +2,14 @@
 import { useEffect, useMemo, useRef, useState, type ComponentProps, type HTMLAttributes } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Trash2, Send, MessageSquare } from 'lucide-react';
-import { useCsrfContext } from '@/contexts/CsrfContext';
+import { useOptionalCsrfContext } from '@/contexts/CsrfContext';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
 import CommentLikeButton from '@/components/CommentLikeButton';
 import { ProfilePreviewTrigger } from '@/components/ProfilePreview';
 import Image from 'next/image';
+import { useLiveStream } from "@/hooks/useLiveStream";
 
 type Comment = {
   id: string;
@@ -49,60 +50,74 @@ export default function CommentsSection({
   const [showPreview, setShowPreview] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const lastRefresh = useRef(0);
-  const { csrfToken, refreshToken } = useCsrfContext();
+  const { csrfToken, refreshToken } = useOptionalCsrfContext();
 
-  const headers: HeadersInit = useMemo(() => {
+  // Build headers dynamically at call time to always use the latest CSRF token
+  const buildHeaders = (token?: string): HeadersInit => {
     const h: Record<string, string> = { "Content-Type": "application/json" };
-    if (csrfToken) h["X-CSRF-Token"] = csrfToken;
+    if (token) h["X-CSRF-Token"] = token;
     return h;
-  }, [csrfToken]);
+  };
 
-  // SSE subscribe: on change, fetch latest comments
-  useEffect(() => {
-    const es = new EventSource(`/api/posts/${postId}/comments/stream`);
-    const onMsg = async (ev: MessageEvent) => {
-      try {
-        const data = JSON.parse(ev.data);
-        if (data?.type === "comments-changed") {
-          const now = Date.now();
-          if (now - lastRefresh.current < 250) return; // debounce
-          lastRefresh.current = now;
-          const res = await fetch(`/api/posts/${postId}`, { cache: "no-store" });
-          if (res.ok) {
-            const json = await res.json();
-            if (Array.isArray(json?.comments)) setComments(json.comments as Comment[]);
-          }
-        } else if (data?.type === 'comment-liked' && data?.commentId) {
-          // Lightweight in-place update for likes
-          setComments(prev => prev.map(c => c.id === String(data.commentId)
-            ? { ...c, likes: typeof data.likes === 'number' ? data.likes : (c.likes || 0) }
-            : c
-          ));
-        }
-      } catch {}
-    };
-    es.addEventListener("message", onMsg);
-    return () => {
-      es.removeEventListener("message", onMsg);
-      es.close();
-    };
+  // SSE subscribe: on change, fetch latest comments (shared across tabs)
+  useLiveStream(`/api/posts/${postId}/comments/stream`, async (data) => {
+    if (data?.type === "comments-changed") {
+      const now = Date.now();
+      if (now - lastRefresh.current < 250) return; // debounce
+      lastRefresh.current = now;
+      const res = await fetch(`/api/posts/${postId}`, { cache: "no-store" });
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json?.comments)) setComments(json.comments as Comment[]);
+      }
+    } else if (data?.type === 'comment-liked' && data?.commentId) {
+      // Lightweight in-place update for likes
+      setComments(prev => prev.map(c => c.id === String(data.commentId)
+        ? { ...c, likes: typeof data.likes === 'number' ? data.likes : (c.likes || 0) }
+        : c
+      ));
+    }
   }, [postId]);
 
   const submitComment = async (text: string, retryCount = 0) => {
     try {
       setBusy(true);
+      let tokenToUse = csrfToken;
+      if (!tokenToUse || !/^[a-f0-9]{64}$/i.test(tokenToUse)) {
+        try { await refreshToken(); } catch {}
+        // try to read from cookie immediately
+        try {
+          tokenToUse = decodeURIComponent(document.cookie.split('; ').find(c => c.startsWith('csrf='))?.split('=')[1] || '');
+        } catch { tokenToUse = csrfToken; }
+      }
       const res = await fetch(`/api/posts/${postId}/comment`, {
         method: "POST",
-        headers,
+        headers: buildHeaders(tokenToUse),
+        credentials: 'same-origin',
         body: JSON.stringify({ body: text }),
       });
       
       if (res.status === 403 && retryCount < 2) {
-        // Token might be expired, refresh and retry
-        await refreshToken();
-        // Small delay to ensure new token is ready
-        setTimeout(() => submitComment(text, retryCount + 1), 1000);
-        return;
+        // Token might be expired, refresh and retry immediately with fresh token
+        try { await refreshToken(); } catch {}
+        try {
+          const refreshed = decodeURIComponent(document.cookie.split('; ').find(c => c.startsWith('csrf='))?.split('=')[1] || '');
+          const res2 = await fetch(`/api/posts/${postId}/comment`, {
+            method: "POST",
+            headers: buildHeaders(refreshed),
+            credentials: 'same-origin',
+            body: JSON.stringify({ body: text }),
+          });
+          if (!res2.ok) {
+            const errJson = await res2.json().catch(() => ({}));
+            console.error('Comment submission retry failed:', res2.status, errJson);
+            return;
+          }
+        } catch (e) {
+          console.error('Comment submission retry error:', e);
+          return;
+        }
+        // success path continues below
       }
       
       if (!res.ok) {
@@ -164,16 +179,33 @@ export default function CommentsSection({
 
   const onDelete = async (commentId: string, retryCount = 0) => {
     try {
+      let tokenToUse = csrfToken;
+      if (!tokenToUse || !/^[a-f0-9]{64}$/i.test(tokenToUse)) {
+        try { await refreshToken(); } catch {}
+        try {
+          tokenToUse = decodeURIComponent(document.cookie.split('; ').find(c => c.startsWith('csrf='))?.split('=')[1] || '');
+        } catch { tokenToUse = csrfToken; }
+      }
       const res = await fetch(`/api/posts/${postId}/comment/${commentId}`, {
         method: "DELETE",
-        headers,
+        headers: buildHeaders(tokenToUse),
+        credentials: 'same-origin',
       });
       
       if (res.status === 403 && retryCount < 2) {
-        // Token might be expired, refresh and retry
-        await refreshToken();
-        setTimeout(() => onDelete(commentId, retryCount + 1), 1000);
-        return;
+        try { await refreshToken(); } catch {}
+        try {
+          const refreshed = decodeURIComponent(document.cookie.split('; ').find(c => c.startsWith('csrf='))?.split('=')[1] || '');
+          const res2 = await fetch(`/api/posts/${postId}/comment/${commentId}`, {
+            method: "DELETE",
+            headers: buildHeaders(refreshed),
+            credentials: 'same-origin',
+          });
+          if (res2.ok) {
+            setComments(prev => prev.filter(c => c.id !== commentId));
+          }
+          return;
+        } catch {}
       }
       
       if (res.ok) {

@@ -2,13 +2,14 @@
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useEffect, useState } from 'react';
-import { useCsrfContext } from '@/contexts/CsrfContext';
+import { useOptionalCsrfContext } from '@/contexts/CsrfContext';
 import ChatWidget from '@/components/ChatWidget';
-import { MessageSquare, Shield, Terminal, LogOut, Settings, UserCircle, LogIn } from 'lucide-react';
+import { MessageSquare, Shield, Terminal, LogOut, Settings, UserCircle, LogIn, Menu, X } from 'lucide-react';
 
 export default function Navbar({ ssrIsAuthed = false }: { ssrIsAuthed?: boolean }) {
   const [hydrated, setHydrated] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Safe hooks with error handling
   let user = null;
@@ -23,12 +24,8 @@ export default function Navbar({ ssrIsAuthed = false }: { ssrIsAuthed?: boolean 
     console.warn('Auth hook error:', error);
   }
   
-  try {
-    const csrf = useCsrfContext();
-    csrfToken = csrf?.csrfToken || '';
-  } catch (error) {
-    console.warn('CSRF hook error:', error);
-  }
+  const csrf = useOptionalCsrfContext();
+  csrfToken = csrf?.csrfToken || '';
 
   useEffect(() => {
     setHydrated(true);
@@ -58,7 +55,15 @@ export default function Navbar({ ssrIsAuthed = false }: { ssrIsAuthed?: boolean 
               DED<span className="text-pink-400">SEC</span>
             </span>
           </Link>
-          <div className="text-cyan-300 font-mono text-sm" suppressHydrationWarning>Initializing...</div>
+          <div className="flex items-center gap-2">
+            <div className="text-cyan-300 font-mono text-sm" suppressHydrationWarning>Initializing...</div>
+            <button
+              aria-label="Menu"
+              className="md:hidden p-2 rounded-lg border border-cyan-500/30 text-cyan-300"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </nav>
     );
@@ -91,9 +96,21 @@ export default function Navbar({ ssrIsAuthed = false }: { ssrIsAuthed?: boolean 
             DED<span className="text-pink-400">SEC</span>
           </span>
         </Link>
-        
-        {/* Navigation items with cyberpunk styling */}
-        <div className="flex items-center gap-3">
+
+        {/* Mobile menu button */}
+        <button
+          type="button"
+          aria-label="Toggle menu"
+          aria-controls="mobile-menu"
+          aria-expanded={isMenuOpen}
+          onClick={() => setIsMenuOpen(v => !v)}
+          className="md:hidden inline-flex items-center justify-center p-2 rounded-lg border border-cyan-500/40 text-cyan-300 hover:text-cyan-200 hover:border-cyan-300 transition-colors"
+        >
+          {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+
+        {/* Navigation items with cyberpunk styling (desktop) */}
+        <div className="hidden md:flex items-center gap-3">
           {authed ? (
             <>
               {/* Chat button */}
@@ -184,6 +201,61 @@ export default function Navbar({ ssrIsAuthed = false }: { ssrIsAuthed?: boolean 
                 <span className="font-mono text-sm">REGISTER</span>
               </Link>
             </>
+          )}
+        </div>
+      </div>
+      
+      {/* Mobile menu panel */}
+      <div
+        id="mobile-menu"
+        className={`md:hidden overflow-hidden transition-[max-height,opacity] duration-300 ${isMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+        aria-hidden={!isMenuOpen}
+      >
+        <div className="px-4 pt-3 pb-4 border-t border-cyan-500/20 bg-black/40 backdrop-blur-sm">
+          {authed ? (
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => { setIsChatOpen(true); setIsMenuOpen(false); }}
+                className="w-full flex items-center gap-2 px-4 py-3 bg-cyan-500/10 border border-cyan-500/50 rounded-lg text-cyan-300"
+              >
+                <MessageSquare className="w-5 h-5" />
+                <span className="font-mono text-sm">Chat</span>
+              </button>
+              {(user?.role === 'admin') && (
+                <Link href="/admin" onClick={() => setIsMenuOpen(false)} className="w-full flex items-center gap-2 px-4 py-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400">
+                  <Shield className="w-5 h-5" />
+                  <span className="font-mono text-sm">Admin</span>
+                </Link>
+              )}
+              <Link href="/settings" onClick={() => setIsMenuOpen(false)} className="w-full flex items-center gap-2 px-4 py-3 bg-purple-500/10 border border-purple-500/50 rounded-lg text-purple-300">
+                <Settings className="w-5 h-5" />
+                <span className="font-mono text-sm">Config</span>
+              </Link>
+              <div className="flex items-center gap-2 px-3 py-3 border border-cyan-500/20 rounded-lg bg-cyan-500/5">
+                <UserCircle className="w-5 h-5 text-cyan-400" />
+                <span className="font-mono text-sm text-cyan-300" suppressHydrationWarning>
+                  {user?.name || user?.email?.split('@')[0] || 'USER'}
+                </span>
+              </div>
+              <form action="/api/auth/logout" method="POST" className="inline" onSubmit={() => setIsMenuOpen(false)}>
+                <input type="hidden" name="csrf" value={csrfToken || ''} suppressHydrationWarning />
+                <button type="submit" className="w-full flex items-center gap-2 px-4 py-3 bg-pink-500/10 border border-pink-500/50 rounded-lg text-pink-300">
+                  <LogOut className="w-5 h-5" />
+                  <span className="font-mono text-sm">Exit</span>
+                </button>
+              </form>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <Link href="/login" onClick={() => setIsMenuOpen(false)} className="w-full flex items-center gap-2 px-4 py-3 bg-cyan-500/10 border border-cyan-500/50 rounded-lg text-cyan-300">
+                <LogIn className="w-5 h-5" />
+                <span className="font-mono text-sm">Login</span>
+              </Link>
+              <Link href="/register" onClick={() => setIsMenuOpen(false)} className="w-full flex items-center gap-2 px-4 py-3 bg-pink-500/10 border border-pink-500/50 rounded-lg text-pink-300">
+                <UserCircle className="w-5 h-5" />
+                <span className="font-mono text-sm">Register</span>
+              </Link>
+            </div>
           )}
         </div>
       </div>

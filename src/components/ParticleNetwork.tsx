@@ -139,17 +139,17 @@ export default function ParticleNetwork() {
   }
 
   return (
-    <>
+    <div className="fixed inset-0 overflow-hidden pointer-events-none">
       <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, #0a1628 0%, #020817 40%, #000000 100%)` }} />
-      <div className="absolute inset-0 pointer-events-none">
+      <div className="absolute inset-0">
         <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 60%)', filter: 'blur(80px)', animation: 'slowDrift 30s ease-in-out infinite' }} />
         <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(37, 99, 235, 0.15) 0%, transparent 60%)', filter: 'blur(80px)', animation: 'slowDrift 35s ease-in-out infinite reverse' }} />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(96, 165, 250, 0.1) 0%, transparent 50%)', filter: 'blur(100px)' }} />
       </div>
-      <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" style={{ width: '100%', height: '100%' }} />
-      <div className="absolute inset-0 pointer-events-none" style={{ background: `radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.4) 100%)` }} />
+      <canvas ref={canvasRef} className="absolute inset-0" style={{ width: '100%', height: '100%' }} />
+      <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.4) 100%)` }} />
       <style jsx>{` @keyframes slowDrift { 0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; } 33% { transform: translate(50px, -50px) scale(1.1); opacity: 0.3; } 66% { transform: translate(-30px, 30px) scale(0.95); opacity: 0.6; } } `}</style>
-    </>
+    </div>
   );
 }
 

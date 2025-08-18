@@ -3,8 +3,7 @@ import { cookies } from 'next/headers';
 import { verifyAuthToken } from '@/lib/auth/jwt';
 import { connectToDatabase } from '@/lib/db';
 import { validateCsrf } from '@/lib/csrf';
-import { updateSessionActivityDetailed } from '@/lib/sessions';
-import { getClientIp, getUserAgent } from '@/lib/request';
+import { updateSessionActivity } from '@/lib/sessions';
 import { userCache } from '@/lib/userCache';
 import { broadcast } from '@/lib/userBus';
 
@@ -30,10 +29,8 @@ export async function POST(req: NextRequest) {
       // ⚡ ULTRA-FAST: Folosește cache-ul în loc să interoghez DB-ul la fiecare heartbeat
       await userCache.updateUserActivity(payload.sub);
       
-      // Update session fingerprint (async, non-blocking)
-      const userAgent = getUserAgent(req);
-      const ip = getClientIp(req);
-      updateSessionActivityDetailed(token, userAgent, ip).catch(() => {}); // Fire and forget
+      // Update session lastActivity only (lightweight)
+      updateSessionActivity(token).catch(() => {}); // Fire and forget
       
       // ⚡ CACHED: Obține lista din cache (30s TTL)
       const cachedUsers = await userCache.getActiveUsers();

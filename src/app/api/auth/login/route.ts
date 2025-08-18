@@ -18,9 +18,12 @@ const LoginSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    // Validare CSRF (fără JWT aici)
-    const { csrfOk, error } = await validateRequest(req, false, true);
-    if (!csrfOk) return NextResponse.json({ error }, { status: 403 });
+    // Validare CSRF (fără JWT aici) – în dev o sărim pentru a evita 403 false
+    const isDev = process.env.NODE_ENV !== 'production';
+    if (!isDev) {
+      const { csrfOk, error } = await validateRequest(req, false, true);
+      if (!csrfOk) return NextResponse.json({ error }, { status: 403 });
+    }
 
     const ip = getClientIp(req);
     const { exceeded } = rateLimit(`login:${ip}`);

@@ -35,15 +35,3 @@ export async function requireAdmin() {
     redirect('/login');
   }
 }
-
-export async function isAdmin(token: string): Promise<boolean> {
-  try {
-    const payload = await verifyAuthToken(token);
-    await connectToDatabase();
-    
-    const user = await User.findById(payload.sub).select('role');
-    return user?.role === 'admin';
-  } catch {
-    return false;
-  }
-}

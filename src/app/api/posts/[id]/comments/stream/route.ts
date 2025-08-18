@@ -9,6 +9,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const writer = writable.getWriter();
   const enc = new TextEncoder();
   let stopped = false;
+  let heartbeat: ReturnType<typeof setInterval> | null = null;
 
   const send = async (data: unknown) => {
     if (stopped) return;
@@ -25,10 +26,22 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   // initial hello
   await send({ type: 'connected', postId: id, ts: Date.now() });
 
+  // Heartbeat to keep intermediaries from closing the stream
+  try {
+    heartbeat = setInterval(() => {
+      if (stopped) return;
+      try { void writer.write(enc.encode(`: ping\n\n`)); } catch {}
+    }, 15000);
+  } catch {}
+
   const onAbort = () => {
     if (stopped) return;
     stopped = true;
     try { unsubscribe(); } catch {}
+    if (heartbeat) {
+      try { clearInterval(heartbeat); } catch {}
+      heartbeat = null;
+    }
     try { writer.close(); } catch {}
   };
   try { req.signal.addEventListener('abort', onAbort); } catch {}

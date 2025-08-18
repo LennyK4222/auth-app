@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Heart } from 'lucide-react';
-import { useCsrfContext } from '@/contexts/CsrfContext';
+import { useOptionalCsrfContext } from '@/contexts/CsrfContext';
 
 interface CommentLikeButtonProps {
   postId: string;
@@ -17,7 +17,7 @@ export default function CommentLikeButton({ postId, commentId, initialLikes, ini
   const [liked, setLiked] = useState(initialLiked);
   const [loading, setLoading] = useState(false);
   const [showAnimation, setShowAnimation] = useState(false);
-  const { csrfToken, refreshToken } = useCsrfContext();
+  const { csrfToken, refreshToken } = useOptionalCsrfContext();
 
   const handleLike = async (retryCount: number = 0) => {
     if (!csrfToken || loading) return;

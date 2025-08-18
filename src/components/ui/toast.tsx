@@ -53,17 +53,26 @@ export function Toast({ id, title, description, variant = "default", onClose }: 
 
 export function useToast() {
   const [toasts, setToasts] = React.useState<ToastProps[]>([]);
+  const hasGlobal = typeof window !== 'undefined' && (window as any).__GLOBAL_TOASTER__ === true;
 
   const removeToast = React.useCallback((id: string) => {
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
   const toast = React.useCallback((props: Omit<ToastProps, "id" | "onClose">) => {
+    if (typeof window !== 'undefined' && (window as any).__GLOBAL_TOASTER__ === true) {
+      const type = props.variant === 'success' ? 'success' : props.variant === 'destructive' ? 'error' : 'info';
+      window.dispatchEvent(new CustomEvent('toast:show', { detail: { type, title: props.title, description: props.description } }));
+      return;
+    }
     const id = Math.random().toString(36).substr(2, 9);
     setToasts(prev => [...prev, { ...props, id, onClose: removeToast }]);
   }, [removeToast]);
 
   const ToastContainer = React.useMemo(() => {
+    if (hasGlobal) {
+      return () => null;
+    }
     return () => (
       <div className="fixed top-4 right-4 z-[99999] space-y-2">
         <AnimatePresence mode="popLayout">
@@ -73,7 +82,7 @@ export function useToast() {
         </AnimatePresence>
       </div>
     );
-  }, [toasts, removeToast]);
+  }, [toasts, removeToast, hasGlobal]);
 
   return { toast, ToastContainer };
 }

@@ -4,9 +4,8 @@ import { useAuth } from "@/hooks/useAuth";
 
 // Displays a subtle animated aura overlay for admins only
 export default function AdminAura({ className = "" }: { className?: string }) {
-  const { hasRole } = useAuth();
-  const isAdmin = hasRole("admin");
-  if (!isAdmin) return null;
+  const { isAuthenticated } = useAuth();
+  if (!isAuthenticated) return null;
 
   return (
     <div
