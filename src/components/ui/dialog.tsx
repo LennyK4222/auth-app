@@ -44,7 +44,7 @@ export function Dialog({ isOpen, onClose, children, title, maxWidth = "max-w-md"
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}

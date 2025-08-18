@@ -1,9 +1,13 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
+const nextConfig = {
+  reactStrictMode: false, // Temporarily disable to test duplicate effect issues
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
   },
+  
+  // Allow LAN dev origins for Next.js dev overlay/assets
+  allowedDevOrigins: ['http://192.168.1.159:3000', 'http://localhost:3000'],
   
   // Image domains for external avatars
   images: {
@@ -48,6 +52,6 @@ const nextConfig: NextConfig = {
       ],
     },
   ],
-};
+} satisfies NextConfig & { allowedDevOrigins?: string[] };
 
 export default nextConfig;

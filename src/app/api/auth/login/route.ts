@@ -5,7 +5,7 @@ import { User } from '@/models/User';
 import bcrypt from 'bcryptjs';
 import { signAuthToken } from '@/lib/auth/jwt';
 import { rateLimit } from '@/lib/rateLimit';
-import { validateCsrf } from '@/lib/csrf';
+import { validateRequest } from '@/lib/auth/validateRequest';
 import { createSession } from '@/lib/sessions';
 import { awardXPForDailyLogin } from '@/lib/xp';
 import { getClientIp, getUserAgent } from '@/lib/request';
@@ -18,10 +18,11 @@ const LoginSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-  // CSRF check
-  const csrfOk = await validateCsrf(req);
-  if (!csrfOk) return NextResponse.json({ error: 'CSRF invalid' }, { status: 403 });
-  const ip = getClientIp(req);
+    // Validare CSRF (fără JWT aici)
+    const { csrfOk, error } = await validateRequest(req, false, true);
+    if (!csrfOk) return NextResponse.json({ error }, { status: 403 });
+
+    const ip = getClientIp(req);
     const { exceeded } = rateLimit(`login:${ip}`);
     if (exceeded) {
       return NextResponse.json({ error: 'Prea multe încercări. Încearcă mai târziu.' }, { status: 429 });
@@ -67,16 +68,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-  // Update last login timestamp (non-blocking-ish)
-  try { await User.updateOne({ _id: user._id }, { $set: { lastLoginAt: new Date() } }); } catch {}
-  
-  // Award XP for daily login
-  try {
-    await awardXPForDailyLogin(user._id.toString());
-  } catch (xpError) {
-    console.error('Failed to award daily login XP:', xpError);
-    // Continue with login even if XP awarding fails
-  }
+    // Update last login timestamp (non-blocking-ish)
+    try { await User.updateOne({ _id: user._id }, { $set: { lastLoginAt: new Date() } }); } catch {}
+    // Award XP for daily login
+    try {
+      await awardXPForDailyLogin(user._id.toString());
+    } catch (xpError) {
+      console.error('Failed to award daily login XP:', xpError);
+      // Continue with login even if XP awarding fails
+    }
   
   const token = await signAuthToken({ 
     sub: user._id.toString(), 

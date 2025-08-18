@@ -103,6 +103,7 @@ export function ProfileHeader({}: ProfileHeaderProps) {
             className="w-full h-full object-cover"
             fill
             sizes="100vw"
+            unoptimized
           />
         )}
         <motion.button
@@ -135,6 +136,7 @@ export function ProfileHeader({}: ProfileHeaderProps) {
                   className="w-full h-full object-cover"
                   width={96}
                   height={96}
+                  unoptimized
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-white font-bold text-2xl">

@@ -1,263 +1,93 @@
-import { cookies, headers } from 'next/headers';
+// ...cod valid...
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { verifyAuthToken } from '@/lib/auth/jwt';
 import Link from 'next/link';
+import { MessageSquare, Calendar, Bookmark, Award } from 'lucide-react';
 import { RecentUsersWidget } from '@/components/RecentUsersWidget';
-import { AuroraBackground } from '@/components/AuroraBackground';
-import Feed from '../components/Feed';
-import { ClientCategories } from '@/components/ClientCategories';
-import { connectToDatabase } from '@/lib/db';
-import { Category } from '@/models/Category';
-import { Post } from '@/models/Post';
-import { 
-  TrendingUp,
-  Users, 
-  MessageSquare, 
-  Heart, 
-  Calendar,
-  Star,
-  Bookmark,
-  Award,
-  Zap
-} from 'lucide-react';
+import FeedClient from '../components/FeedClient';
+import HolographicDisplay from '@/components/HolographicDisplay';
+import TrendingCategories from '@/components/TrendingCategories';
+import ParticleNetwork from '@/components/ParticleNetwork';
 
-// Ensure this page is always rendered dynamically so auth via cookies is fresh
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
-async function getCategories() {
-  try {
-    await connectToDatabase();
-    
-    // Fetch categories from database
-    const categories = await Category.find({ isActive: true })
-      .select('name slug description color icon postCount')
-      .sort({ name: 1 })
-      .lean();
-
-    // Calculate real post counts for each category
-    const categoriesWithCounts = await Promise.all(
-      categories.map(async (cat) => {
-        // Count actual posts for this category
-        const realPostCount = await Post.countDocuments({ category: cat.slug });
-        
-        // Update the stored count if it's different
-        if (realPostCount !== cat.postCount) {
-          await Category.findByIdAndUpdate(cat._id, { postCount: realPostCount });
-        }
-        
-        return {
-          name: cat.name,
-          slug: cat.slug,
-          count: realPostCount > 0 ? 
-            realPostCount > 999 ? `${(realPostCount/1000).toFixed(1)}k` : realPostCount.toString() 
-            : '0',
-          color: cat.color,
-          icon: cat.icon, // Pasăm doar numele icon-ului
-          description: cat.description
-        };
-      })
-    );
-
-    return categoriesWithCounts;
-  } catch (error) {
-    console.error('Error fetching categories from database:', error);
-    
-    // Fallback to static categories if database fails
-    return [
-      { name: 'Tehnologie', slug: 'tehnologie', count: '2.1k', color: 'from-blue-500 to-indigo-600', icon: 'Code' },
-      { name: 'Fotografie', slug: 'fotografie', count: '890', color: 'from-purple-500 to-pink-600', icon: 'Camera' },
-      { name: 'Gaming', slug: 'gaming', count: '3.2k', color: 'from-red-500 to-orange-600', icon: 'GamepadIcon' },
-      { name: 'Muzică', slug: 'muzica', count: '1.5k', color: 'from-green-500 to-emerald-600', icon: 'Music' },
-      { name: 'Educație', slug: 'educatie', count: '756', color: 'from-yellow-500 to-amber-600', icon: 'BookOpen' },
-      { name: 'Business', slug: 'business', count: '942', color: 'from-slate-500 to-slate-600', icon: 'Briefcase' },
-    ];
-  }
-}
-
-export default async function RootPage() {
+export default async function Home() {
   const cookieStore = await cookies();
-  let token = cookieStore.get('token')?.value;
-  if (!token) {
-    const hdrs = await headers();
-    const cookieHeader = hdrs.get('cookie') || '';
-    const match = cookieHeader.match(/(?:^|;\s*)token=([^;]+)/);
-    token = match ? decodeURIComponent(match[1]) : undefined;
-  }
+  const token = cookieStore.get('token')?.value;
   if (!token) {
     redirect('/login');
   }
-
   try {
-  await verifyAuthToken(token, true);
-  const categories = await getCategories();
-    
-    return (
-      <>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
-          <main className="relative mx-auto max-w-7xl px-4 py-8">
-            {/* Heartbeat runs globally from the root layout */}
-
-          {/* Hero Section */}
-          <section className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white/95 backdrop-blur-sm p-8 shadow-lg dark:border-slate-800/80 dark:bg-slate-900/95">
-            <AuroraBackground />
-            <div className="relative">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                  <Zap className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-                    Descoperă comunitatea
-                  </h1>
-                  <p className="text-slate-600 dark:text-slate-400">
-                    Conectează-te, împărtășește și explorează împreună cu alții
-                  </p>
-                </div>
-              </div>
-
-              {/* CTA Buttons */}
-              <div className="flex flex-wrap items-center gap-3 mt-2">
-                <a href="#feed-composer" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition">
-                  <MessageSquare className="w-4 h-4" />
-                  Creează postare
-                </a>
-                <a href="#categories" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 dark:hover:bg-slate-700 transition">
-                  <TrendingUp className="w-4 h-4 text-indigo-600" />
-                  Explorează categorii
-                </a>
-              </div>
-            
-            {/* Quick Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-              <div className="bg-white/60 dark:bg-slate-900/60 rounded-xl p-4 backdrop-blur-sm">
-                <div className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-indigo-600" />
-                  <span className="text-2xl font-bold text-slate-900 dark:text-white">1.2k</span>
-                </div>
-                <p className="text-sm text-slate-600 dark:text-slate-400">Membri activi</p>
-              </div>
-              <div className="bg-white/60 dark:bg-slate-900/60 rounded-xl p-4 backdrop-blur-sm">
-                <div className="flex items-center gap-2">
-                  <MessageSquare className="w-5 h-5 text-green-600" />
-                  <span className="text-2xl font-bold text-slate-900 dark:text-white">8.7k</span>
-                </div>
-                <p className="text-sm text-slate-600 dark:text-slate-400">Discuții</p>
-              </div>
-              <div className="bg-white/60 dark:bg-slate-900/60 rounded-xl p-4 backdrop-blur-sm">
-                <div className="flex items-center gap-2">
-                  <Heart className="w-5 h-5 text-red-600" />
-                  <span className="text-2xl font-bold text-slate-900 dark:text-white">25k</span>
-                </div>
-                <p className="text-sm text-slate-600 dark:text-slate-400">Aprecieri</p>
-              </div>
-              <div className="bg-white/60 dark:bg-slate-900/60 rounded-xl p-4 backdrop-blur-sm">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-purple-600" />
-                  <span className="text-2xl font-bold text-slate-900 dark:text-white">+15%</span>
-                </div>
-                <p className="text-sm text-slate-600 dark:text-slate-400">Creștere</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Categories Section */}
-  <section id="categories" className="mt-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Categorii populare</h2>
-            <Link href="/categories" className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 font-medium text-sm">
-              Vezi toate →
-            </Link>
-          </div>
-          
-          <div className="bg-white shadow-sm dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
-            <ClientCategories initialCategories={categories} />
-          </div>
-        </section>
-
-        {/* Main Content Grid */}
-    <section className="mt-8 grid gap-8 lg:grid-cols-3">
+    // Validate JWT only; do not hard-require DB session to allow first-load
+    await verifyAuthToken(token);
+  } catch {
+    redirect('/login');
+  }
+  return (
+    <>
+      <div className="relative min-h-screen overflow-hidden">
+      {/* CONSTELLATION PARTICLE NETWORK BACKGROUND */}
+      <ParticleNetwork />
+      
+      <main className="relative container mx-auto px-4 py-8">
+        <section className="mt-8 grid gap-8 lg:grid-cols-3">
           {/* Feed */}
           <div className="lg:col-span-2">
-      <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Feed recent</h2>
-            </div>
-            <Feed />
+            <HolographicDisplay>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">Feed recent</h2>
+              </div>
+            </HolographicDisplay>
+            <FeedClient />
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Trending Topics */}
-            <div className="rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 p-6 backdrop-blur-sm">
-              <h3 className="font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-orange-500" />
-                Trending acum
-              </h3>
-              <div className="space-y-3">
-                {[
-                  { topic: 'Next.js 15', posts: '124 postări' },
-                  { topic: 'AI & Machine Learning', posts: '89 postări' },
-                  { topic: 'React Server Components', posts: '67 postări' },
-                  { topic: 'TypeScript 5.0', posts: '45 postări' },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center justify-between p-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg cursor-pointer">
-                    <div>
-                      <p className="font-medium text-slate-900 dark:text-white text-sm">#{item.topic}</p>
-                      <p className="text-xs text-slate-600 dark:text-slate-400">{item.posts}</p>
-                    </div>
-                    <Star className="w-4 h-4 text-yellow-500" />
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* Trending Categories */}
+            <TrendingCategories />
 
             {/* Quick Actions */}
-            <div className="rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 p-6 backdrop-blur-sm">
-              <h3 className="font-bold text-slate-900 dark:text-white mb-4">Acțiuni rapide</h3>
+            <div className="rounded-xl border border-fuchsia-500/30 bg-slate-900/70 p-6 backdrop-blur-sm shadow-[0_0_20px_rgba(217,70,239,0.15)]">
+              <h3 className="font-bold text-fuchsia-300 mb-4">Acțiuni rapide</h3>
               <div className="space-y-3">
-                <Link href="/create-post" className="flex items-center gap-3 p-3 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-lg transition-colors">
-                  <MessageSquare className="w-5 h-5 text-indigo-600" />
-                  <span className="font-medium text-slate-900 dark:text-white">Creează postare</span>
+                <Link href="/create-post" className="flex items-center gap-3 p-3 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 rounded-lg transition-colors">
+                  <MessageSquare className="w-5 h-5 text-fuchsia-400" />
+                  <span className="font-medium text-fuchsia-100">Creează postare</span>
                 </Link>
-                <Link href="/bookmarks" className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors">
-                  <Bookmark className="w-5 h-5 text-slate-600" />
-                  <span className="font-medium text-slate-900 dark:text-white">Salvate</span>
+                <Link href="/bookmarks" className="flex items-center gap-3 p-3 hover:bg-slate-800/80 rounded-lg transition-colors">
+                  <Bookmark className="w-5 h-5 text-cyan-300" />
+                  <span className="font-medium text-slate-200">Salvate</span>
                 </Link>
-                <Link href="/achievements" className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors">
-                  <Award className="w-5 h-5 text-slate-600" />
-                  <span className="font-medium text-slate-900 dark:text-white">Realizări</span>
+                <Link href="/achievements" className="flex items-center gap-3 p-3 hover:bg-slate-800/80 rounded-lg transition-colors">
+                  <Award className="w-5 h-5 text-emerald-300" />
+                  <span className="font-medium text-slate-200">Realizări</span>
                 </Link>
               </div>
             </div>
 
             {/* Events */}
-            <div className="rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 p-6 backdrop-blur-sm">
-              <h3 className="font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-green-500" />
+            <div className="rounded-xl border border-emerald-500/30 bg-slate-900/70 p-6 backdrop-blur-sm shadow-[0_0_20px_rgba(16,185,129,0.15)]">
+              <h3 className="font-bold text-emerald-300 mb-4 flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-emerald-300" />
                 Evenimente
               </h3>
               <div className="space-y-3">
-                <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                  <p className="font-medium text-slate-900 dark:text-white text-sm">Tech Meetup</p>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">Mâine, 19:00</p>
+                <div className="p-3 bg-emerald-500/10 rounded-lg">
+                  <p className="font-medium text-emerald-100 text-sm">Tech Meetup</p>
+                  <p className="text-xs text-emerald-300/80">Mâine, 19:00</p>
                 </div>
-                <div className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg">
-                  <p className="font-medium text-slate-900 dark:text-white text-sm">Webinar AI</p>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">Vineri, 14:00</p>
+                <div className="p-3 hover:bg-slate-800/80 rounded-lg">
+                  <p className="font-medium text-emerald-100 text-sm">Webinar AI</p>
+                  <p className="text-xs text-emerald-300/80">Vineri, 14:00</p>
                 </div>
               </div>
             </div>
+
+            {/* Recent/Active Users */}
+            <RecentUsersWidget />
           </div>
         </section>
-          </main>
-          {/* Corner widget with recent/active users */}
-          <RecentUsersWidget />
-        </div>
-      </>
-    );
-  } catch {
-    redirect('/login');
-  }
+      </main>
+      </div>
+    </>
+  );
 }
-// Simplified homepage has no actions

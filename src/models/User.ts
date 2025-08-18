@@ -50,6 +50,8 @@ export interface IUser extends Document {
     marketing: boolean;
     thirdParty: boolean;
   };
+  // Bookmarks
+  bookmarks?: mongoose.Types.ObjectId[];
 }
 
 const UserSchema = new Schema<IUser>(
@@ -114,7 +116,9 @@ const UserSchema = new Schema<IUser>(
       personalization: { type: Boolean, default: true },
       marketing: { type: Boolean, default: false },
       thirdParty: { type: Boolean, default: false }
-    }
+    },
+    // Bookmarks
+    bookmarks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Post' }]
   },
   { timestamps: true }
 );

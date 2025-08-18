@@ -38,3 +38,14 @@ export function notifyCommentChange(postId: string) {
     try { fn(payload); } catch {}
   }
 }
+
+// Broadcast an arbitrary event payload to subscribers of a post
+export function notifyPostEvent(postId: string, payload: Record<string, unknown>) {
+  const bus = getBus();
+  const set = bus.channels.get(postId);
+  if (!set || set.size === 0) return;
+  const enriched = { postId, ts: Date.now(), ...payload };
+  for (const fn of set) {
+    try { fn(enriched); } catch {}
+  }
+}

@@ -3,13 +3,34 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useEffect, useState } from 'react';
 import { useCsrfContext } from '@/contexts/CsrfContext';
+import ChatWidget from '@/components/ChatWidget';
+import { MessageSquare, Shield, Terminal, LogOut, Settings, UserCircle, LogIn } from 'lucide-react';
 
 type SSRUser = { name?: string; email: string; role?: string } | null;
 
 export default function Navbar({ ssrIsAuthed = false, ssrUser = null }: { ssrIsAuthed?: boolean; ssrUser?: SSRUser }) {
-  const { user, isAuthenticated, hasRole } = useAuth();
   const [hydrated, setHydrated] = useState(false);
-  const { csrfToken } = useCsrfContext();
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  
+  // Safe hooks with error handling
+  let user = null;
+  let isAuthenticated = false;
+  let csrfToken = '';
+  
+  try {
+    const auth = useAuth();
+    user = auth?.user || null;
+    isAuthenticated = auth?.isAuthenticated || false;
+  } catch (error) {
+    console.warn('Auth hook error:', error);
+  }
+  
+  try {
+    const csrf = useCsrfContext();
+    csrfToken = csrf?.csrfToken || '';
+  } catch (error) {
+    console.warn('CSRF hook error:', error);
+  }
 
   useEffect(() => {
     setHydrated(true);
@@ -17,91 +38,183 @@ export default function Navbar({ ssrIsAuthed = false, ssrUser = null }: { ssrIsA
 
   // Lock to SSR values until hydration completes to avoid mismatches
   const authed = hydrated ? isAuthenticated : ssrIsAuthed;
-  const role = hydrated ? (user?.role ?? 'user') : (ssrUser?.role ?? 'user');
-  const displayName = hydrated
-    ? (user?.name || user?.email.split('@')[0] || '')
-    : (ssrUser?.name || ssrUser?.email?.split('@')[0] || '');
 
-  return (
-    <nav className="sticky top-0 z-10 border-b border-slate-200/60 bg-white/95 backdrop-blur-md dark:border-slate-800/60 dark:bg-slate-900/95" suppressHydrationWarning>
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
-        <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">F</span>
-            </div>
-            <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-white">
-              Forum
+  // Prevent hydration mismatch by not rendering until hydrated
+  if (!hydrated) {
+    return (
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-black/20 backdrop-blur-xl border-b border-cyan-500/30 p-4" suppressHydrationWarning>
+        <div className="flex justify-between items-center">
+          <Link 
+            href="/" 
+            className="group flex items-center gap-2 text-xl font-bold font-mono"
+            suppressHydrationWarning
+          >
+            <Terminal className="w-6 h-6 text-cyan-400 group-hover:text-cyan-300 transition-colors" />
+            <span 
+              className="text-cyan-300 group-hover:text-cyan-200 transition-all"
+              style={{
+                textShadow: '0 0 10px rgba(0, 255, 255, 0.5)',
+                letterSpacing: '0.1em'
+              }}
+            >
+              DED<span className="text-pink-400">SEC</span>
             </span>
           </Link>
-
-          {authed && (
-            <div className="hidden md:flex items-center gap-6 text-sm">
-              <Link href="/" className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors">
-                Acasă
-              </Link>
-              <Link href="/trending" className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors">
-                Trending
-              </Link>
-              <Link href="/categories" className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors">
-                Categorii
-              </Link>
-              <Link href="/create" className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors">
-                Creează
-              </Link>
-            </div>
-          )}
+          <div className="text-cyan-300 font-mono text-sm" suppressHydrationWarning>Initializing...</div>
         </div>
+      </nav>
+    );
+  }
 
-        <div className="flex items-center gap-4">
+  return (
+    <>
+    <nav 
+      className="fixed top-0 left-0 right-0 z-50 bg-black/20 backdrop-blur-xl border-b border-cyan-500/30 p-4" 
+      suppressHydrationWarning
+      style={{
+        boxShadow: '0 0 20px rgba(0, 255, 255, 0.1), inset 0 0 20px rgba(0, 255, 255, 0.05)'
+      }}
+    >
+      <div className="container mx-auto flex justify-between items-center">
+        {/* Logo with cyberpunk styling */}
+        <Link 
+          href="/" 
+          className="group flex items-center gap-2 text-xl font-bold font-mono"
+          suppressHydrationWarning
+        >
+          <Terminal className="w-6 h-6 text-cyan-400 group-hover:text-cyan-300 transition-colors" />
+          <span 
+            className="text-cyan-300 group-hover:text-cyan-200 transition-all"
+            style={{
+              textShadow: '0 0 10px rgba(0, 255, 255, 0.5)',
+              letterSpacing: '0.1em'
+            }}
+          >
+            DED<span className="text-pink-400">SEC</span>
+          </span>
+        </Link>
+        
+        {/* Navigation items with cyberpunk styling */}
+        <div className="flex items-center gap-3">
           {authed ? (
             <>
-              <span className="hidden sm:block text-sm text-slate-600 dark:text-slate-300">
-                Salut, {displayName}
-              </span>
-              {(hydrated ? hasRole('admin') : role === 'admin') && (
+              {/* Chat button */}
+              <button
+                onClick={() => setIsChatOpen(true)}
+                className="group flex items-center gap-2 px-4 py-2 bg-cyan-500/10 border border-cyan-500/50 rounded-lg text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-400 hover:text-cyan-200 transition-all duration-300"
+                style={{
+                  boxShadow: '0 0 10px rgba(0, 255, 255, 0.2)'
+                }}
+              >
+                <MessageSquare className="w-4 h-4" />
+                <span className="font-mono text-sm">CHAT</span>
+              </button>
+              
+              {/* Admin button with special styling */}
+              {(user?.role === 'admin') && (
                 <Link 
                   href="/admin" 
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                  className="group flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 hover:bg-red-500/20 hover:border-red-400 hover:text-red-300 transition-all duration-300"
+                  style={{
+                    boxShadow: '0 0 10px rgba(239, 68, 68, 0.2)',
+                    animation: 'pulse 2s infinite'
+                  }}
                 >
-                  👑 Admin
+                  <Shield className="w-4 h-4" />
+                  <span className="font-mono text-sm">ADMIN</span>
                 </Link>
               )}
+              
+              {/* Settings link */}
               <Link 
-                href="/settings"
-                className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                href="/settings" 
+                className="group flex items-center gap-2 px-4 py-2 bg-purple-500/10 border border-purple-500/50 rounded-lg text-purple-300 hover:bg-purple-500/20 hover:border-purple-400 hover:text-purple-200 transition-all duration-300"
+                style={{
+                  boxShadow: '0 0 10px rgba(168, 85, 247, 0.2)'
+                }}
               >
-                ⚙️ Setări
+                <Settings className="w-4 h-4" />
+                <span className="font-mono text-sm">CONFIG</span>
               </Link>
+              
+              {/* User info display */}
+              <div className="flex items-center gap-2 px-3 py-2 border border-cyan-500/20 rounded-lg bg-cyan-500/5">
+                <UserCircle className="w-4 h-4 text-cyan-400" />
+                <span className="font-mono text-xs text-cyan-300" suppressHydrationWarning>
+                  {user?.name || user?.email?.split('@')[0] || 'USER'}
+                </span>
+              </div>
+              
+              {/* Logout button */}
               <form action="/api/auth/logout" method="POST" className="inline">
-                {/* Include CSRF as hidden field for non-JS form submit fallback */}
-                <input type="hidden" name="csrf" value={csrfToken || ''} />
-                <button
-                  type="submit"
-                  className="px-3 py-2 text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
+                <input type="hidden" name="csrf" value={csrfToken || ''} suppressHydrationWarning />
+                <button 
+                  type="submit" 
+                  className="group flex items-center gap-2 px-4 py-2 bg-pink-500/10 border border-pink-500/50 rounded-lg text-pink-300 hover:bg-pink-500/20 hover:border-pink-400 hover:text-pink-200 transition-all duration-300"
+                  style={{
+                    boxShadow: '0 0 10px rgba(236, 72, 153, 0.2)'
+                  }}
                 >
-                  Logout
+                  <LogOut className="w-4 h-4" />
+                  <span className="font-mono text-sm">EXIT</span>
                 </button>
               </form>
             </>
           ) : (
             <>
+              {/* Login button */}
               <Link 
                 href="/login" 
-                className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors"
+                className="group flex items-center gap-2 px-4 py-2 bg-cyan-500/10 border border-cyan-500/50 rounded-lg text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-400 hover:text-cyan-200 transition-all duration-300"
+                style={{
+                  boxShadow: '0 0 10px rgba(0, 255, 255, 0.2)'
+                }}
               >
-                Login
+                <LogIn className="w-4 h-4" />
+                <span className="font-mono text-sm">LOGIN</span>
               </Link>
+              
+              {/* Register button */}
               <Link 
                 href="/register" 
-                className="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
+                className="group flex items-center gap-2 px-4 py-2 bg-pink-500/10 border border-pink-500/50 rounded-lg text-pink-300 hover:bg-pink-500/20 hover:border-pink-400 hover:text-pink-200 transition-all duration-300"
+                style={{
+                  boxShadow: '0 0 10px rgba(236, 72, 153, 0.2)'
+                }}
               >
-                Register
+                <UserCircle className="w-4 h-4" />
+                <span className="font-mono text-sm">REGISTER</span>
               </Link>
             </>
           )}
         </div>
       </div>
+      
+      {/* Animated bottom border */}
+      <div 
+        className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent"
+        style={{
+          animation: 'slideGlow 3s linear infinite'
+        }}
+      />
     </nav>
+    
+    {/* Add padding to body to account for fixed navbar */}
+    <div className="h-[72px]" />
+    
+    <ChatWidget isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+    
+    {/* Add custom animations */}
+    <style jsx>{`
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.8; }
+      }
+      @keyframes slideGlow {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+      }
+    `}</style>
+    </>
   );
 }

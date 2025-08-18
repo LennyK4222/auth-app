@@ -97,6 +97,7 @@ export function PublicProfileView({ profile, recentPosts, likedPosts = [] }: Pub
                 alt="Cover" 
                 fill
                 className="object-cover"
+                unoptimized
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500"></div>
@@ -114,6 +115,7 @@ export function PublicProfileView({ profile, recentPosts, likedPosts = [] }: Pub
                     width={128}
                     height={128}
                     className="object-cover"
+                    unoptimized
                   />
                 ) : (
                   <span className="text-2xl sm:text-3xl font-bold text-white">

@@ -2,10 +2,27 @@ import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { verifyAuthToken } from '@/lib/auth/jwt';
 import Link from 'next/link';
-import Image from 'next/image';
 import { connectToDatabase } from '@/lib/db';
 import { Category } from '@/models/Category';
 import { Post } from '@/models/Post';
+import CyberpunkBackground from '@/components/CyberpunkBackground';
+import HolographicDisplay from '@/components/HolographicDisplay';
+import CategoryFeedClient from '@/components/CategoryFeedClient';
+import CreateThreadModal from '../../../components/CreateThreadModal';
+import { 
+  TrendingUp,
+  ArrowLeft,
+  Code,
+  Camera,
+  Music,
+  GamepadIcon,
+  BookOpen,
+  Briefcase,
+  Car,
+  Utensils,
+  Plane,
+  Globe
+} from 'lucide-react';
 
 // TypeScript interfaces for lean() query results
 interface CategoryLean {
@@ -34,43 +51,6 @@ interface PostLean {
     avatar?: string;
   };
 }
-
-// Interface for transformed post data used in component
-interface TransformedPost {
-  _id: string;
-  title: string;
-  content: string;
-  category: string;
-  createdAt: string;
-  score: number;
-  votes: number;
-  author: {
-    _id: string;
-    name: string;
-    email: string;
-    avatar?: string;
-  };
-}
-import { 
-  MessageSquare, 
-  Heart, 
-  Calendar,
-  TrendingUp,
-  Clock,
-  User as UserIcon,
-  ArrowLeft,
-  Code,
-  Camera,
-  Music,
-  GamepadIcon,
-  BookOpen,
-  Briefcase,
-  Car,
-  Utensils,
-  Plane,
-  Globe
-} from 'lucide-react';
-import CreateThreadModal from '../../../components/CreateThreadModal';
 
 // Ensure this page is always rendered dynamically
 export const dynamic = 'force-dynamic';
@@ -111,7 +91,7 @@ async function getCategoryWithPosts(slug: string, sort: string = 'recent') {
         sortQuery = { score: -1, createdAt: -1 };
         break;
       case 'top':
-        sortQuery = { 'votesCount': -1, createdAt: -1 };
+        sortQuery = { score: -1, createdAt: -1 }; // Changed from 'votesCount' to 'score'
         break;
       default: // recent
         sortQuery = { createdAt: -1 };
@@ -130,9 +110,9 @@ async function getCategoryWithPosts(slug: string, sort: string = 'recent') {
         name: category.name,
         slug: category.slug,
         description: category.description,
-        color: category.color,
-        icon: category.icon,
-        postCount: category.postCount
+        color: category.color || '#3b82f6', // Default color if not set
+        icon: category.icon || 'Tag', // Default icon if not set
+        postCount: category.postCount || 0
       },
       posts: posts.map((post: PostLean) => ({
         _id: post._id.toString(),
@@ -143,9 +123,9 @@ async function getCategoryWithPosts(slug: string, sort: string = 'recent') {
         score: post.score || 0,
         votes: Object.keys(post.votes || {}).length,
         author: {
-          _id: post.authorId?._id?.toString(),
+          _id: post.authorId?._id?.toString() || post.authorId?.toString(),
           name: post.authorId?.name || 'Anonim',
-          email: post.authorId?.email,
+          email: post.authorId?.email || '',
           avatar: post.authorId?.avatar
         }
       }))
@@ -182,12 +162,19 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const categoryData = await getCategoryWithPosts(slug, sort);
   if (!categoryData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Categoria nu a fost găsită</h1>
-          <Link href="/" className="text-blue-600 hover:text-blue-800 dark:text-blue-400">
-            ← Înapoi la pagina principală
-          </Link>
+      <div className="relative min-h-screen overflow-hidden bg-slate-950">
+        <CyberpunkBackground />
+        <div className="relative flex items-center justify-center min-h-screen">
+          <HolographicDisplay>
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-cyan-300 mb-4 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">
+                Categoria nu a fost găsită
+              </h1>
+              <Link href="/" className="text-cyan-400 hover:text-cyan-300 transition-colors">
+                ← Înapoi la pagina principală
+              </Link>
+            </div>
+          </HolographicDisplay>
         </div>
       </div>
     );
@@ -197,136 +184,49 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const IconComponent = iconMap[category.icon] || TrendingUp;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
+    <div className="relative min-h-screen overflow-hidden bg-slate-950">
+      <CyberpunkBackground />
       
-      <main className="relative mx-auto max-w-7xl px-4 py-8">
+      <main className="relative container mx-auto px-4 py-8">
         {/* Header cu categoria */}
         <div className="mb-8">
-          <Link href="/" className="inline-flex items-center text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white mb-4">
-            <ArrowLeft className="w-4 h-4 mr-2" />
+          <Link href="/" className="inline-flex items-center text-cyan-400 hover:text-cyan-300 transition-colors mb-4 group">
+            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
             Înapoi la pagina principală
           </Link>
           
-          <div className={`bg-gradient-to-r ${category.color} rounded-2xl p-6 text-white shadow-xl`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                  <IconComponent className="w-8 h-8" />
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold">{category.name}</h1>
-                  {category.description && (
-                    <p className="text-white/90 mt-2">{category.description}</p>
-                  )}
-                  <p className="text-white/80 text-sm mt-1">
-                    {category.postCount} {category.postCount === 1 ? 'thread' : 'thread-uri'}
-                  </p>
-                </div>
-              </div>
-              
-              <CreateThreadModal categorySlug={category.slug} categoryName={category.name} />
-            </div>
-          </div>
-        </div>
-
-        {/* Sort options */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex space-x-2">
-            <Link 
-              href={`/category/${slug}`}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                !sort || sort === 'recent' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
-              }`}
-            >
-              <Clock className="w-4 h-4 inline mr-2" />
-              Recent
-            </Link>
-            <Link 
-              href={`/category/${slug}?sort=hot`}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                sort === 'hot' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
-              }`}
-            >
-              <TrendingUp className="w-4 h-4 inline mr-2" />
-              Popular
-            </Link>
-            <Link 
-              href={`/category/${slug}?sort=top`}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                sort === 'top' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
-              }`}
-            >
-              <Heart className="w-4 h-4 inline mr-2" />
-              Top
-            </Link>
-          </div>
-        </div>
-
-        {/* Posts list */}
-        <div className="space-y-4">
-          {posts.length === 0 ? (
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-8 text-center shadow-sm">
-              <MessageSquare className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
-                Încă nu există thread-uri în această categorie
-              </h3>
-              <p className="text-slate-600 dark:text-slate-400 mb-4">
-                Fii primul care începe o discuție!
-              </p>
-              <CreateThreadModal categorySlug={category.slug} categoryName={category.name} />
-            </div>
-          ) : (
-            posts.map((post: TransformedPost) => (
-              <div key={post._id} className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm hover:shadow-md transition">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <Link href={`/thread/${post._id}`} className="block">
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition">
-                        {post.title}
-                      </h3>
-                      <p className="text-slate-600 dark:text-slate-400 mt-2 line-clamp-2">
-                        {post.content}
-                      </p>
-                    </Link>
-                    
-                    <div className="flex items-center space-x-4 mt-4 text-sm text-slate-500 dark:text-slate-400">
-                      <div className="flex items-center space-x-2">
-                        {post.author.avatar ? (
-                          <Image 
-                            src={post.author.avatar} 
-                            alt={post.author.name}
-                            width={24}
-                            height={24}
-                            className="w-6 h-6 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
-                            <UserIcon className="w-3 h-3 text-white" />
-                          </div>
-                        )}
-                        <span>{post.author.name}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>{new Date(post.createdAt).toLocaleDateString('ro-RO')}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Heart className="w-4 h-4" />
-                        <span>{post.votes}</span>
-                      </div>
-                    </div>
+          <HolographicDisplay>
+            <div className="rounded-2xl p-6 shadow-[0_0_30px_rgba(34,211,238,0.3)] border border-cyan-500/50 bg-gradient-to-r from-slate-900/80 to-slate-800/80 backdrop-blur-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-cyan-500/20 rounded-lg backdrop-blur-sm border border-cyan-400/30">
+                    <IconComponent className="w-8 h-8 text-cyan-300" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold text-cyan-200 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">
+                      {category.name}
+                    </h1>
+                    {category.description && (
+                      <p className="text-cyan-100/90 mt-2">{category.description}</p>
+                    )}
+                    <p className="text-cyan-200/80 text-sm mt-1">
+                      {category.postCount} {category.postCount === 1 ? 'thread' : 'thread-uri'}
+                    </p>
                   </div>
                 </div>
+                
+                <CreateThreadModal categorySlug={category.slug} categoryName={category.name} />
               </div>
-            ))
-          )}
+            </div>
+          </HolographicDisplay>
         </div>
+
+        {/* Posts list with client-side functionality */}
+        <CategoryFeedClient 
+          initialPosts={posts}
+          categorySlug={category.slug}
+          initialSort={sort}
+        />
       </main>
     </div>
   );

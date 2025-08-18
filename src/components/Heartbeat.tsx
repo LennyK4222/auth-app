@@ -40,13 +40,39 @@ export default function Heartbeat() {
       }
     };
 
-    // quick initial probe and tighter interval for responsiveness
-    const initialTimeout = setTimeout(sendHeartbeat, 1000);
-    const interval = setInterval(sendHeartbeat, 10000);
+    // ⚡ OPTIMIZED: Quick initial probe and optimal interval
+    const initialTimeout = setTimeout(sendHeartbeat, 2000);
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    const start = () => {
+      if (interval) return;
+      interval = setInterval(() => {
+        if (document.visibilityState !== 'visible') return; // pause when hidden
+        void sendHeartbeat();
+      }, 45000); // 45s - reduced frequency since we have cache
+    };
+    const stop = () => {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+    start();
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        void sendHeartbeat();
+        start();
+      } else {
+        stop();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
 
     return () => {
       clearTimeout(initialTimeout);
-      clearInterval(interval);
+  stop();
+  document.removeEventListener('visibilitychange', onVisibility);
     };
   }, [csrfToken, isLoading, router]);
 

@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
 import { Post } from '@/models/Post';
 import { Comment } from '@/models/Comment';
+import { User } from '@/models/User';
 import { verifyAuthToken } from '@/lib/auth/jwt';
+import { Types } from 'mongoose';
 
 interface PostDoc {
   _id: string;
@@ -31,9 +33,35 @@ export const revalidate = 0;
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   await connectToDatabase();
   const { id } = await params;
+  // Validate ObjectId to prevent CastError from malformed paths (e.g., source map requests)
+  if (!Types.ObjectId.isValid(id)) {
+    return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
+  }
+  // Determine current user (optional) to compute likedByMe
+  let meSub: string | null = null;
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
+    if (token) {
+      const payload = await verifyAuthToken(token as any).catch(() => null) as { sub?: string } | null;
+      if (payload?.sub) meSub = String(payload.sub);
+    }
+  } catch {}
   const post = await Post.findById(id).lean() as unknown as PostDoc;
   if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  const comments = await Comment.find({ postId: id }, { body: 1, authorEmail: 1, authorName: 1, authorId: 1, createdAt: 1 }).sort({ createdAt: 1 }).lean() as unknown as CommentDoc[];
+  const comments = await Comment.find(
+    { postId: id }, 
+    { body: 1, authorEmail: 1, authorName: 1, authorId: 1, createdAt: 1, likes: 1, likedBy: 1 }
+  ).sort({ createdAt: 1 }).lean() as unknown as (CommentDoc & { likes?: number; likedBy?: any[] })[];
+  // Fetch avatars for unique authorIds
+  const authorIds = Array.from(new Set(comments.map(c => String((c as any).authorId))));
+  let avatarsMap = new Map<string, string | null>();
+  if (authorIds.length) {
+    const users = await User.find({ _id: { $in: authorIds } }, { avatar: 1 }).lean();
+    for (const u of users) {
+      avatarsMap.set(String((u as any)._id), (u as any).avatar || null);
+    }
+  }
   return NextResponse.json({
     id: String(post._id),
     title: post.title,
@@ -49,7 +77,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     authorEmail: c.authorEmail, 
     authorName: c.authorName || null, 
     authorId: String(c.authorId), 
-    createdAt: c.createdAt 
+    createdAt: c.createdAt,
+    likes: typeof c.likes === 'number' ? c.likes : 0,
+    likedByMe: meSub ? (Array.isArray((c as any).likedBy) && (c as any).likedBy.some((u: any) => String(u) === meSub)) : false,
+    authorAvatar: avatarsMap.get(String(c.authorId)) || null,
   })),
   });
 }
@@ -76,6 +107,9 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     await connectToDatabase();
     const { id } = await params;
+    if (!Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
+    }
 
     // Find the post
     const post = await Post.findById(id);
@@ -84,7 +118,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     }
 
     // Check if user owns the post or is admin
-    const isOwner = post.authorId === payload.sub;
+    const isOwner = String(post.authorId) === String(payload.sub);
     const isAdmin = payload.role === 'admin';
     
     if (!isOwner && !isAdmin) {

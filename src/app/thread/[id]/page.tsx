@@ -5,6 +5,7 @@ import type { JWTPayload } from '@/lib/auth/jwt';
 import Link from 'next/link';
 import CommentsSection from '@/components/CommentsSection';
 import { ArrowLeft, User, Clock, MessageSquare } from 'lucide-react';
+import ParticleNetwork from '@/components/ParticleNetwork';
 
 function timeAgo(iso?: string | null) {
   if (!iso) return '';
@@ -18,8 +19,11 @@ function timeAgo(iso?: string | null) {
   return `${d}d`;
 }
 
-async function getThread(base: string, id: string) {
-  const res = await fetch(`${base}/api/posts/${id}`, { cache: 'no-store' });
+async function getThread(base: string, id: string, cookieHeader: string | undefined) {
+  const res = await fetch(`${base}/api/posts/${id}`, {
+    cache: 'no-store',
+    headers: cookieHeader ? { cookie: cookieHeader } : undefined,
+  });
   if (!res.ok) return null;
   return res.json();
 }
@@ -40,11 +44,17 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
   const base = `${proto}://${host}`;
 
   const { id } = await params; // Keep this line unchanged for context
-  const data = await getThread(base, id);
+  const cookieHeader = hdrs.get('cookie') || undefined;
+  const data = await getThread(base, id, cookieHeader);
   if (!data) redirect('/');
 
   return (
-    <main className="relative mx-auto max-w-4xl px-4 py-8">
+    <>
+      <div className="relative min-h-screen overflow-hidden">
+        {/* CONSTELLATION PARTICLE NETWORK BACKGROUND */}
+        <ParticleNetwork />
+
+        <main className="relative mx-auto max-w-4xl px-4 py-8">
       {/* Navigation */}
       <div className="mb-6">
         <Link 
@@ -56,40 +66,40 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
         </Link>
       </div>
 
-      {/* Thread Header */}
-      <article className="rounded-2xl border border-slate-200/60 bg-gradient-to-br from-white/80 to-slate-50/80 backdrop-blur-xl shadow-xl dark:from-slate-900/80 dark:to-slate-800/80 dark:border-slate-700/60">
-        <div className="p-8">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white leading-tight">
+      {/* Thread Header - styled like Feed cards */}
+      <article className="neon-card hover:scale-[1.01] transition-all duration-200">
+        <div className="p-6">
+          <div className="flex items-start justify-between gap-4 mb-3">
+            <h1 className="text-2xl font-bold text-cyan-200 glitch" data-text={data.title}>
               {data.title}
             </h1>
-            <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 shrink-0">
-              <User size={16} />
+            <div className="flex items-center gap-2 text-sm text-slate-300 shrink-0">
+              <User size={16} className="text-cyan-400" />
               <span className="font-medium">{data.authorName || data.authorEmail}</span>
             </div>
           </div>
-          
+
           <div className="prose prose-slate dark:prose-invert max-w-none">
-            <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+            <p className="text-[15px] text-slate-300 whitespace-pre-wrap leading-relaxed">
               {data.body}
             </p>
           </div>
-          
-          <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-200/60 dark:border-slate-700/60">
-            <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+
+          <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-700/60">
+            <div className="flex items-center gap-6 text-xs text-slate-400">
               <div className="flex items-center gap-1">
-                <Clock size={12} />
-                <span>Publicat {timeAgo(data.createdAt)}</span>
+                <Clock size={12} className="text-fuchsia-400" />
+                <span suppressHydrationWarning>Publicat {timeAgo(data.createdAt)}</span>
               </div>
               <div className="flex items-center gap-1">
-                <MessageSquare size={12} />
+                <MessageSquare size={12} className="text-cyan-400" />
                 <span>{data.comments?.length || 0} comentarii</span>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-green-500"></div>
-              <span className="text-xs text-slate-500 dark:text-slate-400">Discuție activă</span>
+              <span className="text-xs text-slate-400">Discuție activă</span>
             </div>
           </div>
         </div>
@@ -99,6 +109,8 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
       <div className="mt-8">
         <CommentsSection postId={id} initialComments={data.comments || []} meSub={String(user.sub)} />
       </div>
-    </main>
+        </main>
+      </div>
+    </>
   );
 }

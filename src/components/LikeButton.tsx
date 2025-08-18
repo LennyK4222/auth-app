@@ -8,9 +8,10 @@ interface LikeButtonProps {
   postId: string;
   initialLikes: number;
   initialLiked: boolean;
+  onLike?: (liked: boolean, likes: number) => void;
 }
 
-export default function LikeButton({ postId, initialLikes, initialLiked }: LikeButtonProps) {
+export default function LikeButton({ postId, initialLikes, initialLiked, onLike }: LikeButtonProps) {
   const [likes, setLikes] = useState(initialLikes);
   const [liked, setLiked] = useState(initialLiked);
   const [loading, setLoading] = useState(false);
@@ -55,6 +56,7 @@ export default function LikeButton({ postId, initialLikes, initialLiked }: LikeB
       const data = await res.json();
       setLiked(data.liked);
       setLikes(data.likes);
+      if (onLike) onLike(data.liked, data.likes);
 
       // Show animation for likes
       if (data.liked && !prevLiked) {

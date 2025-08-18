@@ -3,6 +3,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Trash2, Send, MessageSquare } from 'lucide-react';
 import { useCsrfContext } from '@/contexts/CsrfContext';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeSanitize from 'rehype-sanitize';
+import CommentLikeButton from '@/components/CommentLikeButton';
+import { ProfilePreviewTrigger } from '@/components/ProfilePreview';
 
 type Comment = {
   id: string;
@@ -10,7 +15,10 @@ type Comment = {
   authorEmail?: string;
   authorId?: string;
   authorName?: string;
+  authorAvatar?: string | null;
   createdAt?: string;
+  likes?: number;
+  likedByMe?: boolean;
 };
 
 function timeAgo(iso?: string | null) {
@@ -37,6 +45,8 @@ export default function CommentsSection({
   const [comments, setComments] = useState<Comment[]>(initialComments || []);
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const lastRefresh = useRef(0);
   const { csrfToken, refreshToken } = useCsrfContext();
 
@@ -61,6 +71,12 @@ export default function CommentsSection({
             const json = await res.json();
             if (Array.isArray(json?.comments)) setComments(json.comments as Comment[]);
           }
+        } else if (data?.type === 'comment-liked' && data?.commentId) {
+          // Lightweight in-place update for likes
+          setComments(prev => prev.map(c => c.id === String(data.commentId)
+            ? { ...c, likes: typeof data.likes === 'number' ? data.likes : (c.likes || 0) }
+            : c
+          ));
         }
       } catch {}
     };
@@ -118,6 +134,33 @@ export default function CommentsSection({
     await submitComment(text);
   };
 
+  function insertAtCursor(before: string, after: string = before, placeholder = '') {
+    const el = textareaRef.current;
+    if (!el) return;
+    const start = el.selectionStart ?? body.length;
+    const end = el.selectionEnd ?? body.length;
+    const hasSelection = start !== end;
+    const selected = body.slice(start, end) || placeholder;
+    const newText = body.slice(0, start) + before + selected + after + body.slice(end);
+    setBody(newText);
+    // restore caret position after state flush
+    requestAnimationFrame(() => {
+      const pos = start + before.length + (hasSelection ? selected.length : placeholder.length);
+      el.focus();
+      el.setSelectionRange(pos, pos);
+    });
+  }
+
+  const addBold = () => insertAtCursor('**', '**', 'text');
+  const addItalic = () => insertAtCursor('*', '*', 'text');
+  const addHeading = () => insertAtCursor('# ', '', 'Titlu');
+  const addQuote = () => insertAtCursor('> ', '', 'citat');
+  const addCode = () => insertAtCursor('`', '`', 'cod');
+  const addCodeBlock = () => insertAtCursor('\n```\n', '\n```\n', 'cod');
+  const addUl = () => insertAtCursor('- ', '', 'element listă');
+  const addOl = () => insertAtCursor('1. ', '', 'element listă');
+  const addLink = () => insertAtCursor('[', '](https://)', 'text');
+
   const onDelete = async (commentId: string, retryCount = 0) => {
     try {
       const res = await fetch(`/api/posts/${postId}/comment/${commentId}`, {
@@ -143,19 +186,19 @@ export default function CommentsSection({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
-      className="rounded-2xl border border-slate-200/60 bg-gradient-to-br from-white/80 to-slate-50/80 backdrop-blur-xl shadow-xl dark:from-slate-900/80 dark:to-slate-800/80 dark:border-slate-700/60"
+      className="neon-card"
     >
       <div className="p-6">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-            <MessageSquare className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-fuchsia-600 flex items-center justify-center shadow-[0_0_12px_rgba(34,211,238,0.25)]">
+            <MessageSquare className="w-4 h-4 text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.5)]" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+            <h2 className="text-lg font-semibold text-cyan-300">
               Comentarii
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-slate-300">
               {comments.length} {comments.length === 1 ? 'comentariu' : 'comentarii'}
             </p>
           </div>
@@ -168,22 +211,39 @@ export default function CommentsSection({
           animate={{ opacity: 1 }}
           className="mb-6"
         >
+          {/* Toolbar */}
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <button type="button" onClick={addBold} className="px-2 py-1 text-xs rounded bg-slate-900/60 border border-cyan-500/30 text-cyan-200 hover:bg-slate-800 transition">B</button>
+            <button type="button" onClick={addItalic} className="px-2 py-1 text-xs rounded bg-slate-900/60 border border-fuchsia-500/30 text-fuchsia-200 hover:bg-slate-800 transition"><i>I</i></button>
+            <button type="button" onClick={addHeading} className="px-2 py-1 text-xs rounded bg-slate-900/60 border border-cyan-500/30 text-slate-200 hover:bg-slate-800 transition">H1</button>
+            <button type="button" onClick={addQuote} className="px-2 py-1 text-xs rounded bg-slate-900/60 border border-cyan-500/30 text-slate-200 hover:bg-slate-800 transition">„”</button>
+            <button type="button" onClick={addCode} className="px-2 py-1 text-xs rounded bg-slate-900/60 border border-cyan-500/30 text-slate-200 hover:bg-slate-800 transition">`code`</button>
+            <button type="button" onClick={addCodeBlock} className="px-2 py-1 text-xs rounded bg-slate-900/60 border border-cyan-500/30 text-slate-200 hover:bg-slate-800 transition">``` bloc</button>
+            <button type="button" onClick={addUl} className="px-2 py-1 text-xs rounded bg-slate-900/60 border border-cyan-500/30 text-slate-200 hover:bg-slate-800 transition">• listă</button>
+            <button type="button" onClick={addOl} className="px-2 py-1 text-xs rounded bg-slate-900/60 border border-cyan-500/30 text-slate-200 hover:bg-slate-800 transition">1. listă</button>
+            <button type="button" onClick={addLink} className="px-2 py-1 text-xs rounded bg-slate-900/60 border border-cyan-500/30 text-slate-200 hover:bg-slate-800 transition">link</button>
+            <div className="ml-auto flex items-center gap-2">
+              <label className="text-xs text-slate-400">Preview</label>
+              <button type="button" onClick={() => setShowPreview(v => !v)} className={`px-2 py-1 text-xs rounded border transition ${showPreview ? 'border-cyan-500/50 text-cyan-200 bg-cyan-600/20' : 'border-slate-700 text-slate-300 bg-slate-900/60 hover:bg-slate-800'}`}>{showPreview ? 'ON' : 'OFF'}</button>
+            </div>
+          </div>
           <div className="relative">
             <textarea
               name="body"
               placeholder="Participă la discuție..."
-              className="w-full rounded-xl border border-slate-200 bg-white/70 px-4 py-3 pr-12 text-sm placeholder:text-slate-400 outline-none transition-all focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800/60 dark:placeholder:text-slate-500 dark:focus:border-indigo-500 dark:focus:ring-indigo-900/30"
+              className="w-full rounded-xl border border-slate-700/60 bg-slate-900/60 px-4 py-3 pr-12 text-sm placeholder:text-slate-400 outline-none transition-all focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20"
               rows={3}
               value={body}
               onChange={(e) => setBody(e.target.value)}
               disabled={busy}
+              ref={textareaRef}
             />
             <motion.button
               type="submit"
               disabled={busy || !body.trim()}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="absolute bottom-3 right-3 flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 text-white transition-all disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed"
+              className="absolute bottom-3 right-3 flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-r from-cyan-500 to-fuchsia-600 text-white transition-all disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed"
             >
               {busy ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -192,6 +252,27 @@ export default function CommentsSection({
               )}
             </motion.button>
           </div>
+          {showPreview && (
+            <div className="mt-4 neon-card p-4">
+              <div className="text-xs text-slate-400 mb-2">Previzualizare</div>
+              <div className="prose prose-invert max-w-none">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeSanitize]}
+                  components={{
+                    a: (props: any) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-cyan-300 hover:underline" />,
+                    code: (props: any) => {
+                      const { className, children, ...rest } = props;
+                      return <code className={`rounded bg-slate-800/80 px-1.5 py-0.5 ${className || ''}`} {...rest}>{children}</code>;
+                    },
+                    pre: (props: any) => <pre className="rounded-lg bg-slate-900/80 p-3 overflow-x-auto" {...props} />
+                  }}
+                >
+                  {body}
+                </ReactMarkdown>
+              </div>
+            </div>
+          )}
         </motion.form>
 
         {/* Comments List */}
@@ -207,47 +288,86 @@ export default function CommentsSection({
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ delay: index * 0.05 }}
-                    className="group rounded-xl border border-slate-200/60 bg-white/60 p-4 transition-all hover:bg-white/80 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-900/60 dark:hover:bg-slate-900/80"
+                    className="group neon-card p-4 transition-all hover:scale-[1.01]"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
-                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center">
-                            <User size={12} className="text-white" />
-                          </div>
-                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                            <span 
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                window.location.href = `/profile/${c.authorId}`;
-                              }}
-                              className="hover:text-blue-600 dark:hover:text-blue-400 hover:underline transition-colors cursor-pointer"
-                            >
-                              {c.authorName || c.authorEmail || "Unknown"}
-                            </span>
-                          </span>
-                          {c.createdAt && (
-                            <span className="text-xs text-slate-500 dark:text-slate-400">
-                              • {timeAgo(c.createdAt)}
-                            </span>
-                          )}
+                          <ProfilePreviewTrigger userId={String(c.authorId || '')}>
+                            <div className="flex items-center gap-2">
+                              {c.authorAvatar ? (
+                                <img
+                                  src={c.authorAvatar}
+                                  alt={c.authorName || c.authorEmail || 'avatar'}
+                                  className="w-6 h-6 rounded-full object-cover neon-ring"
+                                  loading="lazy"
+                                  referrerPolicy="no-referrer"
+                                />
+                              ) : (
+                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-500 to-fuchsia-600 flex items-center justify-center text-white neon-ring">
+                                  <User size={12} />
+                                </div>
+                              )}
+                              <span className="text-sm font-medium text-cyan-200">
+                                <span 
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    if (c.authorId) window.location.href = `/profile/${c.authorId}`;
+                                  }}
+                                  className="hover:text-white hover:underline transition-colors cursor-pointer"
+                                >
+                                  {c.authorName || c.authorEmail || "Unknown"}
+                                </span>
+                              </span>
+                              {c.createdAt && (
+                                <span className="text-xs text-slate-400" suppressHydrationWarning>
+                                  • {timeAgo(c.createdAt)}
+                                </span>
+                              )}
+                            </div>
+                          </ProfilePreviewTrigger>
                         </div>
-                        <p className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
-                          {c.body}
-                        </p>
+                        <div className="prose prose-invert max-w-none text-sm text-slate-300">
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            rehypePlugins={[rehypeSanitize]}
+                            components={{
+                              a: (props: any) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-cyan-300 hover:underline" />,
+                              code: (props: any) => {
+                                const { className, children, ...rest } = props;
+                                return <code className={`rounded bg-slate-800/80 px-1.5 py-0.5 ${className || ''}`} {...rest}>{children}</code>;
+                              },
+                              pre: (props: any) => <pre className="rounded-lg bg-slate-900/80 p-3 overflow-x-auto" {...props} />,
+                              ul: (props: any) => <ul className="list-disc pl-5" {...props} />,
+                              ol: (props: any) => <ol className="list-decimal pl-5" {...props} />
+                            }}
+                          >
+                            {c.body}
+                          </ReactMarkdown>
+                        </div>
                       </div>
-                      
-                      {isOwner && (
-                        <motion.button
-                          onClick={() => onDelete(c.id)}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="opacity-0 group-hover:opacity-100 flex items-center justify-center w-8 h-8 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
-                        >
-                          <Trash2 size={14} />
-                        </motion.button>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <CommentLikeButton
+                          postId={postId}
+                          commentId={c.id}
+                          initialLikes={c.likes || 0}
+                          initialLiked={!!c.likedByMe}
+                          onLike={(liked, likes) => {
+                            setComments(prev => prev.map(cc => cc.id === c.id ? { ...cc, likedByMe: liked, likes } : cc));
+                          }}
+                        />
+                        {isOwner && (
+                          <motion.button
+                            onClick={() => onDelete(c.id)}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="opacity-0 group-hover:opacity-100 flex items-center justify-center w-8 h-8 rounded-lg text-red-400 hover:bg-red-900/20 transition-all"
+                          >
+                            <Trash2 size={14} />
+                          </motion.button>
+                        )}
+                      </div>
                     </div>
                   </motion.div>
                 );

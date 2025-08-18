@@ -31,3 +31,393 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
+
+/* Cyber theme helpers */
+.cyber-bg {
+  position: absolute;
+  inset: -20% -20% 0 -20%;
+  background: radial-gradient(1200px 600px at 10% 10%, rgba(99,102,241,0.25), transparent 60%),
+              radial-gradient(1200px 600px at 90% 20%, rgba(236,72,153,0.25), transparent 60%),
+              radial-gradient(1000px 500px at 50% 100%, rgba(34,197,94,0.15), transparent 60%);
+  filter: blur(40px);
+  animation: cyberShift 20s ease-in-out infinite alternate;
+}
+
+.cyber-grid {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px) 0 0 / 40px 40px,
+    linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px) 0 0 / 40px 40px;
+  mask-image: radial-gradient(ellipse at center, black 40%, transparent 70%);
+  pointer-events: none;
+}
+
+.scanlines {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(transparent 50%, rgba(0,0,0,0.15) 50%);
+  background-size: 100% 3px;
+  opacity: 0.25;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+@keyframes cyberShift {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(2%, -1%, 0) scale(1.05); }
+  100% { transform: translate3d(-2%, 2%, 0) scale(1.02); }
+}
+
+/* Neon card border with animated gradient */
+.neon-card {
+  position: relative;
+  border-radius: 16px;
+  border: 1px solid rgba(34, 211, 238, 0.25);
+  background: linear-gradient(180deg, rgba(2,6,23,0.65), rgba(15,23,42,0.6));
+  box-shadow: 0 0 24px rgba(34, 211, 238, 0.12);
+  overflow: hidden;
+}
+.neon-card::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: conic-gradient(from 0deg, rgba(34,211,238,0.2), rgba(217,70,239,0.2), rgba(16,185,129,0.2), rgba(34,211,238,0.2));
+  animation: neonFlow 8s linear infinite;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  padding: 2px;
+  border-radius: 18px;
+}
+@keyframes neonFlow {
+  to { transform: rotate(1turn); }
+}
+
+/* Glitch text effect */
+.glitch {
+  position: relative;
+}
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: hidden;
+}
+.glitch::before {
+  color: rgba(34,211,238,0.9);
+  transform: translate(1px, 0);
+  clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+}
+.glitch::after {
+  color: rgba(217,70,239,0.9);
+  transform: translate(-1px, 0);
+  clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+}
+
+/* Neon button sweep */
+.neon-button {
+  position: relative;
+  overflow: hidden;
+}
+.neon-button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+  transform: translateX(-100%);
+  animation: sweep 2.2s ease-in-out infinite;
+}
+@keyframes sweep {
+  0%, 60% { transform: translateX(-120%); }
+  100%     { transform: translateX(120%); }
+}
+
+/* Neon ring for avatars */
+.neon-ring {
+  box-shadow: 0 0 0 2px rgba(34,211,238,0.35), 0 0 18px rgba(34,211,238,0.25);
+}
+
+/* Advanced Cyber navbar effects */
+.cyber-navbar {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(15,23,42,0.9) 50%, rgba(0,0,0,0.95) 100%);
+}
+
+.cyber-navbar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(34,211,238,0.8), transparent);
+  animation: scanline 3s ease-in-out infinite;
+}
+
+.cyber-navbar::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(217,70,239,0.6), transparent);
+  animation: scanline 4s ease-in-out infinite reverse;
+}
+
+@keyframes scanline {
+  0% { transform: translateX(-100%); opacity: 0; }
+  50% { transform: translateX(100%); opacity: 1; }
+  100% { transform: translateX(-100%); opacity: 0; }
+}
+
+/* Advanced Cyber button effects */
+.cyber-button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cyber-button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cyber-button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.05) 50%, transparent 70%);
+  transform: translateX(-100%);
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cyber-button:hover::before {
+  left: 100%;
+}
+
+.cyber-button:hover::after {
+  transform: translateX(100%);
+}
+
+.cyber-button:hover {
+  transform: translateY(-1px) scale(1.01);
+  filter: brightness(1.05) contrast(1.05);
+}
+
+/* Advanced Pulsing neon effect - fixed positioning */
+.neon-pulse {
+  animation: neonPulse 4s ease-in-out infinite;
+  position: relative;
+  transform: translateZ(0); /* Force hardware acceleration */
+}
+
+.neon-pulse::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: conic-gradient(from 0deg, rgba(34,211,238,0.3), rgba(217,70,239,0.3), rgba(16,185,129,0.3), rgba(34,211,238,0.3));
+  border-radius: inherit;
+  animation: neonRotate 6s linear infinite;
+  z-index: -1;
+  pointer-events: none;
+}
+
+@keyframes neonPulse {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(34,211,238,0.4), 0 0 40px rgba(34,211,238,0.2);
+    transform: scale(1);
+  }
+  50% { 
+    box-shadow: 0 0 30px rgba(34,211,238,0.6), 0 0 50px rgba(34,211,238,0.3), 0 0 70px rgba(34,211,238,0.1);
+    transform: scale(1.02);
+  }
+}
+
+@keyframes neonRotate {
+  to { transform: rotate(360deg); }
+}
+
+/* Holographic text effect - fixed positioning */
+.holographic-text {
+  background: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00, #00ff00, #ff0080, #00ffff);
+  background-size: 400% 400%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: holographicShift 6s ease-in-out infinite;
+  display: inline-block;
+  position: relative;
+  transform: translateZ(0); /* Force hardware acceleration */
+}
+
+@keyframes holographicShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+
+
+/* Glitch enhanced - fixed positioning */
+.glitch {
+  position: relative;
+  display: inline-block;
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  animation: glitchAnim 4s infinite;
+  pointer-events: none;
+}
+
+.glitch::before {
+  color: rgba(34,211,238,0.9);
+  transform: translate(1px, 0);
+  clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+  animation-delay: 0.1s;
+}
+
+.glitch::after {
+  color: rgba(217,70,239,0.9);
+  transform: translate(-1px, 0);
+  clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+  animation-delay: 0.2s;
+}
+
+@keyframes glitchAnim {
+  0%, 90%, 100% { 
+    transform: translate(0, 0); 
+    opacity: 0.8;
+  }
+  10% { 
+    transform: translate(-1px, 1px); 
+    opacity: 0.9;
+  }
+  20% { 
+    transform: translate(1px, -1px); 
+    opacity: 0.7;
+  }
+  30% { 
+    transform: translate(-1px, -1px); 
+    opacity: 0.9;
+  }
+  40% { 
+    transform: translate(1px, 1px); 
+    opacity: 0.8;
+  }
+  50% { 
+    transform: translate(-1px, 1px); 
+    opacity: 0.9;
+  }
+  60% { 
+    transform: translate(1px, -1px); 
+    opacity: 0.7;
+  }
+  70% { 
+    transform: translate(-1px, -1px); 
+    opacity: 0.9;
+  }
+  80% { 
+    transform: translate(1px, 1px); 
+    opacity: 0.8;
+  }
+}
+
+
+
+/* Energy field effect */
+.energy-field {
+  position: relative;
+}
+
+.energy-field::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  background: conic-gradient(from 0deg, transparent, rgba(34,211,238,0.3), transparent, rgba(217,70,239,0.3), transparent);
+  border-radius: inherit;
+  animation: energyRotate 3s linear infinite;
+  z-index: -1;
+}
+
+@keyframes energyRotate {
+  to { transform: rotate(360deg); }
+}
+
+/* Cyberpunk background animations */
+@keyframes pulseVignette {
+  0% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 0.3;
+    transform: scale(1.01);
+  }
+}
+
+/* Circuit lines animation */
+@keyframes circuitPulse {
+  0%, 100% {
+    opacity: 0.3;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.8;
+    filter: brightness(1.5) saturate(1.3);
+  }
+}
+
+/* Data stream flicker */
+@keyframes dataFlicker {
+  0%, 90%, 100% {
+    opacity: 1;
+    text-shadow: 0 0 5px currentColor;
+  }
+  5%, 15%, 25%, 35% {
+    opacity: 0.8;
+    text-shadow: 0 0 10px currentColor, 0 0 15px currentColor;
+  }
+  10%, 20%, 30% {
+    opacity: 0.6;
+    text-shadow: 0 0 3px currentColor;
+  }
+}
+
+/* Orb glow pulsation */
+@keyframes orbGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px currentColor, 0 0 40px currentColor;
+    transform: scale(1);
+  }
+  33% {
+    box-shadow: 0 0 30px currentColor, 0 0 60px currentColor, 0 0 80px currentColor;
+    transform: scale(1.1);
+  }
+  66% {
+    box-shadow: 0 0 25px currentColor, 0 0 50px currentColor;
+    transform: scale(1.05);
+  }
+}

@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 export type AuthRole = 'user' | 'admin' | 'moderator';
 
@@ -44,6 +44,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Dedupe/throttle successive refresh calls and share in-flight
+  const inFlightRef = useRef<Promise<void> | null>(null);
+  const lastFetchedRef = useRef<number>(0);
+  const MIN_REFRESH_MS = 15_000; // avoid spamming /api/auth/me more often than every 15s
 
   const load = useCallback(async () => {
     try {
@@ -60,7 +64,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refresh = useCallback(async () => {
-    await load();
+    // Coalesce if a refresh is already running
+    if (inFlightRef.current) return inFlightRef.current;
+
+    // Throttle frequent triggers (heartbeat/focus/visibility)
+    const now = Date.now();
+    if (now - lastFetchedRef.current < MIN_REFRESH_MS) return;
+
+    const p = (async () => {
+      await load();
+      lastFetchedRef.current = Date.now();
+    })();
+    // Store and clear in-flight marker
+    inFlightRef.current = p.finally(() => { inFlightRef.current = null; });
+    return p;
   }, [load]);
 
   const logout = useCallback(async () => {
@@ -73,11 +90,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Initial load
-    void load();
-
-    // Refresh on heartbeat-ok events
-    const onBeat = () => { void refresh(); };
-    window.addEventListener('heartbeat-ok', onBeat);
+    void (async () => {
+      await load();
+      lastFetchedRef.current = Date.now();
+    })();
 
     // Refresh on focus/visibility
     const onFocus = () => { void refresh(); };
@@ -88,10 +104,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     document.addEventListener('visibilitychange', onVis);
 
     // Fallback periodic refresh
-    const id = setInterval(() => { void refresh(); }, 60000);
+  const id = setInterval(() => { void refresh(); }, 60000);
 
     return () => {
-      window.removeEventListener('heartbeat-ok', onBeat);
       window.removeEventListener('focus', onFocus);
       document.removeEventListener('visibilitychange', onVis);
       clearInterval(id);

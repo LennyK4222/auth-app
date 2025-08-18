@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
   const filter = category ? { category } : {};
   const [items, total] = await Promise.all([
     Post.find(filter, { title: 1, body: 1, authorEmail: 1, authorName: 1, authorId: 1, commentsCount: 1, score: 1, createdAt: 1, votes: 1, category: 1 })
-      .populate('authorId', 'avatar name email')
+      .populate({ path: 'authorId', select: 'avatar name email role', strictPopulate: false })
       .sort(sortObj)
       .skip(skip)
       .limit(pageSize)
@@ -55,6 +55,7 @@ export async function GET(req: NextRequest) {
     Post.countDocuments(filter),
   ]);
   let meSub: string | null = null;
+  let userBookmarks: string[] = [];
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;
@@ -62,16 +63,28 @@ export async function GET(req: NextRequest) {
       const { verifyAuthToken } = await import('@/lib/auth/jwt');
       const user = await verifyAuthToken(token) as AuthUser;
       meSub = String(user.sub);
+      
+      // Get user's bookmarks
+      const { User } = await import('@/models/User');
+      const userDoc = await User.findById(user.sub).select('bookmarks').lean();
+      userBookmarks = userDoc?.bookmarks?.map((id: any) => String(id)) || [];
     }
   } catch {}
 
-  return NextResponse.json({ items: items.map(p => {
+  const postsWithRoles = await Promise.all(items.map(async p => {
     const post = p as unknown as PostDocument;
     const authorIdStr = typeof post.authorId === 'object' ? String(post.authorId._id) : String(post.authorId);
     const meSubStr = String(meSub);
     const canDelete = meSubStr === authorIdStr;
-    const authorData = typeof post.authorId === 'object' ? post.authorId : null;
-    
+    const authorData = typeof post.authorId === 'object' ? post.authorId as { avatar?: string; name?: string; email?: string; _id: string; role?: string } : null;
+    let authorRole = authorData?.role || 'user';
+    if (!authorData?.role && authorIdStr) {
+      try {
+        const { User } = await import('@/models/User');
+        const user = await User.findById(authorIdStr).select('role').lean();
+        authorRole = user?.role || 'user';
+      } catch { authorRole = 'user'; }
+    }
     return {
       id: String(post._id),
       title: post.title,
@@ -80,14 +93,18 @@ export async function GET(req: NextRequest) {
       authorName: post.authorName || authorData?.name || null,
       authorId: authorIdStr,
       authorAvatar: authorData?.avatar || null,
+      authorRole,
       commentsCount: post.commentsCount || 0,
       score: post.score || 0,
       likedByMe: meSub ? Boolean(post.votes && post.votes[meSub] === 1) : false,
+      bookmarkedByMe: meSub ? userBookmarks.includes(String(post._id)) : false,
       canDelete: canDelete, // User can delete their own posts
       createdAt: post.createdAt,
       category: post.category || 'general',
     };
-  }), total, page, pageSize });
+  }));
+
+  return NextResponse.json({ items: postsWithRoles, total, page, pageSize });
 }
 
 const PostSchema = z.object({

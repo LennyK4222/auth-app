@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { jwtVerify } from 'jose';
 
 // Utility: simple cookie parser (for edge)
 function getCookie(req: NextRequest, name: string) {
@@ -20,9 +21,27 @@ function hexRandom64() {
   return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-export function middleware(request: NextRequest) {
-  // Generate a per-request nonce for CSP and pass it to the app via request header
-  const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString('base64');
+export async function middleware(request: NextRequest) {
+  // Handle CORS preflight in dev for API and Next internals
+  if (request.method === 'OPTIONS') {
+    const origin = request.headers.get('origin') || '';
+    const requestHeaders = request.headers.get('access-control-request-headers') || '*';
+    const requestMethod = request.headers.get('access-control-request-method') || 'GET,POST,PUT,PATCH,DELETE';
+    const res = new NextResponse(null, { status: 204 });
+    if (origin) {
+      res.headers.set('Access-Control-Allow-Origin', origin);
+    }
+    res.headers.set('Vary', 'Origin');
+    res.headers.set('Access-Control-Allow-Credentials', 'true');
+    res.headers.set('Access-Control-Allow-Methods', requestMethod);
+    res.headers.set('Access-Control-Allow-Headers', requestHeaders);
+    res.headers.set('Access-Control-Max-Age', '600');
+    return res;
+  }
+  // Generate a per-request nonce for CSP (Edge-safe, no Buffer)
+  const nonceBytes = new Uint8Array(16);
+  crypto.getRandomValues(nonceBytes);
+  const nonce = btoa(String.fromCharCode(...nonceBytes));
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
   // Check both 'session' and 'token' cookies for compatibility
@@ -38,8 +57,40 @@ export function middleware(request: NextRequest) {
     return new NextResponse('Forbidden - Use API endpoint', { status: 403 });
   }
 
+  // Consider authenticated only if token exists AND verifies
+  let isAuthenticated = false;
+  if (token) {
+    try {
+      const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'dev-secret');
+      const issuer = process.env.JWT_ISSUER || 'auth-app';
+      const audience = process.env.JWT_AUDIENCE || 'auth-app-user';
+      await jwtVerify(token, secret, { issuer, audience });
+      isAuthenticated = true;
+    } catch {
+      isAuthenticated = false;
+    }
+  }
+  const isApiRoute = pathname.startsWith('/api');
+  const isPublicPage =
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/register') ||
+    pathname.startsWith('/forgot') ||
+    pathname.startsWith('/reset');
+  // crude check for static files (e.g., /logo.png, /robots.txt)
+  const isFileRequest = /\.[^/]+$/.test(pathname);
+  // allow Next internals and images
+  const isNextInternal = pathname.startsWith('/_next/') || pathname.startsWith('/favicon.ico');
+
+  // If NOT authenticated: block all app pages except public ones
+  if (!isAuthenticated && !isApiRoute && !isPublicPage && !isFileRequest && !isNextInternal) {
+    const url = new URL('/login', request.url);
+    const res = NextResponse.redirect(url);
+    addSecurityHeaders(res, nonce);
+    return res;
+  }
+
   // If authenticated, keep users away from login/register
-  if (token && (pathname.startsWith('/login') || pathname.startsWith('/register'))) {
+  if (isAuthenticated && (isPublicPage)) {
     const url = new URL('/', request.url);
     const res = NextResponse.redirect(url);
     // Attach security headers on redirect too

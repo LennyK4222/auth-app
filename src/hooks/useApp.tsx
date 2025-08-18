@@ -125,35 +125,82 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setState(prev => ({ ...prev, recentUsers: users }));
   }, []);
 
-  const refreshRecentUsers = useCallback(async (limit = 8) => {
+  const refreshRecentUsers = useCallback(async (limit = 8): Promise<void> => {
+    console.log('🔍 refreshRecentUsers called from:', new Error().stack?.split('\n')[2]?.trim());
+    
     try {
-      setState(prev => ({ ...prev, loadingRecentUsers: true }));
+      // Only show loading on initial fetch (empty list) to avoid UI flicker on background refreshes
+      setState(prev => (prev.recentUsers.length === 0 ? { ...prev, loadingRecentUsers: true } : prev));
+
       const res = await fetch(`/api/user/recent?limit=${encodeURIComponent(String(limit))}`, { cache: 'no-store' });
       if (!res.ok) throw new Error('Failed to load recent users');
       const data = (await res.json()) as { users: AppState['recentUsers'] };
-      const list = (data.users || [])
-        .slice()
-        .sort((a, b) => Number(!!b.online) - Number(!!a.online));
-      setState(prev => ({ ...prev, recentUsers: list }));
+      const fetched = (data.users || []).slice();
+
+      setState(prev => {
+        const prevList = prev.recentUsers;
+        const fetchedMap = new Map(fetched.map(u => [u.id, u] as const));
+        const seen = new Set<string>();
+
+        // Build a merged list preserving previous order; update fields for existing IDs
+        const merged: AppState['recentUsers'] = prevList.map(old => {
+          const upd = fetchedMap.get(old.id);
+          if (upd) {
+            seen.add(old.id);
+            // If nothing important changed, keep old reference to avoid re-render of that item
+            const same = (!!old.online === !!upd.online) &&
+              (old.avatar || '') === (upd.avatar || '') &&
+              (old.name || old.email) === (upd.name || upd.email);
+            return same ? old : { ...old, ...upd };
+          }
+          // If user disappeared from fetched, keep the old item to avoid visual drop; can prune later if desired
+          return old;
+        });
+
+        // Append any new users that weren't in previous list
+        for (const u of fetched) {
+          if (!seen.has(u.id) && !prevList.some(p => p.id === u.id)) {
+            merged.push(u);
+          }
+        }
+
+        // If merged is reference-equal to prevList (all items same refs and no new), avoid state change
+        const lengthSame = merged.length === prevList.length;
+        let refsSame = lengthSame;
+        if (lengthSame) {
+          for (let i = 0; i < merged.length; i++) {
+            if (merged[i] !== prevList[i]) { refsSame = false; break; }
+          }
+        }
+
+        if (refsSame) {
+          if (!prev.loadingRecentUsers) return prev;
+          return { ...prev, loadingRecentUsers: false };
+        }
+        return { ...prev, recentUsers: merged, loadingRecentUsers: false };
+      });
     } catch {
-      setState(prev => ({ ...prev, recentUsers: [] }));
-    } finally {
-      setState(prev => ({ ...prev, loadingRecentUsers: false }));
+      setState(prev => {
+        // Keep existing list; only flip loading flag if needed
+        if (!prev.loadingRecentUsers) return prev;
+        return { ...prev, loadingRecentUsers: false };
+      });
     }
   }, []);
 
-  // Keep recent users fresh: on heartbeat-ok and as a fallback every 30s
+  // Keep recent users fresh: initial load only (disabled interval to prevent reload issues)
   useEffect(() => {
-    const onBeat = () => { void refreshRecentUsers(); };
-    window.addEventListener('heartbeat-ok', onBeat);
-    const id = setInterval(onBeat, 30000);
     // Prime on mount once
-  void refreshRecentUsers();
-    return () => {
-      window.removeEventListener('heartbeat-ok', onBeat);
-      clearInterval(id);
-    };
-  }, [refreshRecentUsers]);
+    if (!state.recentUsers || state.recentUsers.length === 0) {
+      void refreshRecentUsers();
+    }
+  }, [refreshRecentUsers, state.recentUsers]); // Only run once on mount
+
+  // Disabled interval to stop reload issues
+  // useEffect(() => {
+  //   const id = setInterval(() => { void refreshRecentUsers(); }, 120000); // 2 min
+  //   return () => clearInterval(id);
+  // }, [refreshRecentUsers]);
 
   return (
     <AppContext.Provider value={{
